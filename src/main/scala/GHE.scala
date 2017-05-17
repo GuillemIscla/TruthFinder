@@ -1,7 +1,10 @@
 import Language._
 
 object GHE extends GHE
+
 trait GHE extends World[GHE] {
+  val worldInstance:GHE = GHE
+  val description:String = "This world contains virtuous gods, vicious evils and voluble humans"
 
   def possibleWorldStates(war:Option[WorldAspectReference[GHE, WorldState[GHE]]]):List[WorldState[GHE]] =
     war match {
@@ -9,20 +12,31 @@ trait GHE extends World[GHE] {
         List(Day, Night)
     }
 
+  def possibleWorldAspects(ws:Option[WorldState[GHE]]):List[WorldAspectReference[GHE, WorldState[GHE]]] =
+    ws match {
+      case _ =>
+        List(DayNightReference)
+    }
+
   val races:List[Race] = List(God, Human, Evil)
 
 
   sealed trait DayNightState extends WorldState[GHE]
-  case object Day extends DayNightState
-  case object Night extends DayNightState
+  case object Day extends DayNightState{
+    val stringRef:String = "Day"
+  }
+  case object Night extends DayNightState{
+    val stringRef:String = "Night"
+  }
 
 
   sealed trait DayNightReference extends WorldAspectReference[GHE, DayNightState]
   case object DayNightReference extends DayNightReference
 
-  def parseText(raw_text:String):(Truth[GHE], List[Sentence[GHE]]) = (Truth(this, List(WorldAspect(DayNightReference, None), Character(Name("A"), None))), List(Sentence(Name("A"), Name("A"), Evil)))
-
   case object Human extends Race {
+    val stringRef:String = "Human"
+    val description:String = "Humans speak the truth during the day but they lie at night"
+
     def personality(truth:Truth[_]):Boolean => Boolean =
       (for {
         dayNightTruth <- truth.truthPieces.find(_.reference == DayNightReference)
@@ -31,21 +45,27 @@ trait GHE extends World[GHE] {
       .fold[Boolean => Boolean](//In case is Human it depends either on the DayNight
         _ => true //If we don't know DayNightState, whatever a Human says can be true
       )({
-        case Day => //During the day Human tells the truth
+        case Day => //During the day Humans tell the truth
           b => b
-        case Night => //During the night Human lies
+        case Night => //During the night Humans lie
           b => !b
       })
 
   }
 
   case object Evil extends Race {
+    val stringRef:String = "Evil"
+    val description:String = "Evils always lie"
+
     def personality(truth:Truth[_]):Boolean => Boolean =
       b => !b //Evil always lie
   }
 
   case object God extends Race {
+    val stringRef:String = "God"
+    val description: String = "Gods always speak the truth"
+
     def personality(truth:Truth[_]):Boolean => Boolean =
-      b => b //God always speaks the truth
+      b => b //God always speak the truth
   }
 }

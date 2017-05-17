@@ -1,8 +1,11 @@
 object Language {
 
-  trait State
+  trait State {
+    def stringRef:String
+  }
   trait WorldState[W <: World[W]] extends State
   trait Race extends State {
+    val description:String
     def personality(truth: Truth[_]): Boolean => Boolean //Sometimes personality might depend on states of the truth
   }
 
@@ -51,12 +54,12 @@ object Language {
     def compareWithTruth(truth: Truth[W]): Option[Boolean] =
       subject match {
         case Everyone =>
-          val everyone = truth.truthPieces.collect({case ch:Character  => compareWithTruthPiece(ch)})
-          everyone.find(_.contains(false)) match {//looking for contradictions
+          val everyone = truth.truthPieces.collect({case ch:Character  => ch})
+          everyone.find(_.state.fold(false)(compareStateAndDO)) match {//looking for contradictions
             case Some(_) =>
               Some(false)//case where we could find a contradiction
             case None => //looking for places where we are not sure
-              everyone.find(_.isEmpty) match {
+              everyone.find(_.state.isEmpty) match {
                 case Some(_) =>
                   None // case where we have not contradiction but we could find some place where we are not sure
                 case None =>
@@ -65,9 +68,9 @@ object Language {
           }
         //Optimization for obvious cases (3 people and says: There are 4 Ogres)
         case NumberOfPeople(number, isExact) =>
-          val everyone = truth.truthPieces.collect({case ch:Character => compareWithTruthPiece(ch)})
-          val matches = everyone.count(_.contains(true))
-          val unknowns = everyone.count(_.isEmpty)
+          val everyone = truth.truthPieces.collect({case ch:Character => ch})
+          val matches = everyone.count(_.state.fold(false)(compareStateAndDO))
+          val unknowns = everyone.count(_.state.isEmpty)
           isExact match {
             case true if matches == number && unknowns == 0 =>
               Some(true) //seeking for exact number of people and we are sure that is the case

@@ -34,4 +34,21 @@ case class Truth[W <: World[W]](world:W, truthPieces:List[TruthPiece[State]]) {
 object Truth {
   def merge[W <: World[W]](a:Truth[W], b:Truth[W]):Truth[W] = //Merge two truths that preserves the minimum set of certainty
     Truth(a.world, a.truthPieces.zip(b.truthPieces).map{case (c1, c2) => c1.merge(c2)})
+
+  def compareTextAndTruth[W <: World[W]](truth: Truth[W], text: List[Sentence[W]], mergeSolutions:Boolean = true):List[Truth[W]]=
+    truth.nextAssumptions() match {
+      case Nil => //If there are no assumptions to make we know everything
+        List(truth)
+      case assumptions =>
+        //We don't need to iterate nodes which already are contradictory. So we filter and recursive call.
+        assumptions.filter(ass => text.forall(ass.charCanSay)).flatMap(compareTextAndTruth(_, text, mergeSolutions)) match {
+          case Nil => //If all the assumptions have contradiction, we return a contradiction
+            Nil
+          case firstAssumption::tail => //With one or several assumptions, we merge the results
+            if(mergeSolutions)
+              List(tail.foldLeft(firstAssumption)(Truth.merge))
+            else
+              firstAssumption::tail
+        }
+    }
 }

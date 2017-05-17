@@ -1,0 +1,3 @@
+A: Someone is Human
+B: I am Evil
+C: It is Day

@@ -1,4 +1,7 @@
-import Language._
+package Worlds
+
+import TruthEngine.Language._
+import TruthEngine.{Truth, World}
 
 object GHE extends GHE
 
@@ -24,9 +27,11 @@ trait GHE extends World[GHE] {
   sealed trait DayNightState extends WorldState[GHE]
   case object Day extends DayNightState{
     val stringRef:String = "Day"
+    val description:String = "Days are nice, favorable for good behaviour"
   }
   case object Night extends DayNightState{
     val stringRef:String = "Night"
+    val description:String = "Nights are scary, favorable for bad behaviour"
   }
 
 

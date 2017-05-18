@@ -1,11 +1,13 @@
+package TruthEngine
+
 object Language {
 
   trait State {
     def stringRef:String
+    def description:String
   }
   trait WorldState[W <: World[W]] extends State
   trait Race extends State {
-    val description:String
     def personality(truth: Truth[_]): Boolean => Boolean //Sometimes personality might depend on states of the truth
   }
 
@@ -14,7 +16,6 @@ object Language {
   trait WorldAspectReference[W <: World[W], +WS <: WorldState[W]] extends Reference[WS]
   trait CollectiveReference extends Reference[Race]
   case object Everyone extends CollectiveReference
-  ///NumberOfPeople needs but me identifier
   case class NumberOfPeople(number:Int, isExact:Boolean) extends CollectiveReference
 
   trait TruthPiece[+S <: State] {
@@ -45,13 +46,8 @@ object Language {
         })
   }
 
-  case class Sentence[W <: World[W]](speaker:Name, subject:Reference[State], directObject:State, sentenceAffirmation: Boolean, directObjectAffirmation:Boolean) {
-    ///Still does not handles cases correctly
-    ///I am sure one of these two sentences are wrongly evaluated:
-    // Everyone is Ogre
-    // Everyone is (Something else than) Ogre === NoOne is Ogre
-    // Check NoOne, NoOneButMe, SomeOne, SomeOneButMe
-    def compareWithTruth(truth: Truth[W]): Option[Boolean] =
+  case class Sentence(speaker:Name, subject:Reference[State], directObject:State, sentenceAffirmation: Boolean, directObjectAffirmation:Boolean) {
+    def compareWithTruth[W <: World[W]](truth: Truth[W]): Option[Boolean] =
     (subject match {
         case Everyone =>
           val everyone = truth.truthPieces.collect({case ch:Character  => ch})

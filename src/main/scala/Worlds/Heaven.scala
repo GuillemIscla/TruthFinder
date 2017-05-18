@@ -36,7 +36,7 @@ trait Heaven extends World[Heaven] {
   case object ShinyReference extends ShinyReference
   case object Shiny extends ShinyState{
     val stringRef:String = "Shiny"
-    val description:String = "Yes, shiny, shiny... It is always shiny."
+    val description:String = "Yes, shiny, shiny... It is never gloomy."
   }
 
   case object God extends HeavenCitizen {

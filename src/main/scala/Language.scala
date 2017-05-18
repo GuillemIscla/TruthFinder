@@ -45,17 +45,17 @@ object Language {
         })
   }
 
-  case class Sentence[W <: World[W]](speaker:Name, subject:Reference[State], directObject:State, affirmative: Boolean = true) {
+  case class Sentence[W <: World[W]](speaker:Name, subject:Reference[State], directObject:State, sentenceAffirmation: Boolean, directObjectAffirmation:Boolean) {
     ///Still does not handles cases correctly
     ///I am sure one of these two sentences are wrongly evaluated:
     // Everyone is Ogre
     // Everyone is (Something else than) Ogre === NoOne is Ogre
     // Check NoOne, NoOneButMe, SomeOne, SomeOneButMe
     def compareWithTruth(truth: Truth[W]): Option[Boolean] =
-      subject match {
+    (subject match {
         case Everyone =>
           val everyone = truth.truthPieces.collect({case ch:Character  => ch})
-          everyone.find(_.state.fold(false)(compareStateAndDO)) match {//looking for contradictions
+          everyone.find(_.state.fold(false)(!compareStateAndDirectObject(_))) match {//looking for contradictions
             case Some(_) =>
               Some(false)//case where we could find a contradiction
             case None => //looking for places where we are not sure
@@ -69,7 +69,7 @@ object Language {
         //Optimization for obvious cases (3 people and says: There are 4 Ogres)
         case NumberOfPeople(number, isExact) =>
           val everyone = truth.truthPieces.collect({case ch:Character => ch})
-          val matches = everyone.count(_.state.fold(false)(compareStateAndDO))
+          val matches = everyone.count(_.state.fold(false)(compareStateAndDirectObject))
           val unknowns = everyone.count(_.state.isEmpty)
           isExact match {
             case true if matches == number && unknowns == 0 =>
@@ -79,25 +79,25 @@ object Language {
             case false if matches >= number =>
               Some(true) //seeking for not exact number of people and we are sure that is the case
             case false if matches + unknowns >= number =>
-              None //seeking for not exact number of people and we are sure if that is the case
+              None //seeking for not exact number of people and we are not sure if that is the case
             case _ =>
               Some(false) //otherwise is a contradiction
           }
 
         case _ =>
           truth.truthPieces.find(_.reference == subject).flatMap(compareWithTruthPiece)
-      }
+      }).map(b => if(sentenceAffirmation) b else !b)
 
     private def compareWithTruthPiece(tp:TruthPiece[State]):Option[Boolean] =
       tp.reference match {
         case tpRef if tpRef == subject => //In case we got the sentence topic, we compare with DO
-          tp.state.map(compareStateAndDO)
+          tp.state.map(compareStateAndDirectObject)
         case _ => //In case we got a TruthPiece the sentence doesn't talk about, we return None
           None
       }
 
-    private def compareStateAndDO(s: State): Boolean =
-      if (affirmative) s == directObject
+    private def compareStateAndDirectObject(s: State): Boolean =
+      if (directObjectAffirmation) s == directObject
       else s != directObject
   }
 

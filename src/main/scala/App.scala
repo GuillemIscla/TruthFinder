@@ -30,11 +30,17 @@ object App {
 
 //    println(sentences.map(getSentence).mkString("\n"))
 
-    val fileName = """src\main\resources\Conversation3.txt"""
+    val fileName = """src\main\resources\Conversation6.txt"""
     val conversation =
       Source.fromFile(fileName).getLines().toList
 
+    println("----------------")
+    println(fileName)
+    println()
+    println(conversation.mkString("\n"))
+    println()
     println(GHE.findTruth(conversation, oneSolution = false))
-
+    println("----------------")
+    Thread.sleep(1000)
   }
 }

@@ -1,4 +1,4 @@
-import Worlds.GHE
+import Worlds.{GHE, Heaven}
 
 import scala.io.Source
 
@@ -7,17 +7,20 @@ import scala.io.Source
   */
 object App {
   def main(args: Array[String]): Unit = {
-    val fileName = """src\main\resources\GHE\Conversation8.txt"""
+    val fileName = """src\main\resources\GHE\Conversation2.txt"""
     val conversation =
       Source.fromFile(fileName).getLines().toList
-
-     println("----------------")
-     println(fileName)
-     println()
-     println(conversation.mkString("\n"))
-     println()
-     println(GHE.findTruth(conversation, oneSolution = false))
-     println("----------------")
-     Thread.sleep(1000)
+    val world = GHE
+    println("----------------")
+    println(world)
+    println("----------------")
+    println(fileName)
+    println()
+    println(conversation.mkString("\n"))
+    println()
+    println("****RESULT****")
+    println(world.findTruth(conversation, oneSolution = true))
+    println("----------------")
+    Thread.sleep(1000)
   }
 }

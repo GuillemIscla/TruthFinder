@@ -19,10 +19,9 @@ object Parser {
 
     eitherListSentences.flatMap{
       listSentences =>
-        val listCharacters:List[Name] = (
-          listSentences.map(_.speaker) ++
-            listSentences.map(_.subject).collect{case name:Name => name})
-          .distinct.sortBy(_.charName)
+        val listCharacters:List[Name] =
+          (listSentences.map(_.speaker) ++ listSentences.map(_.subject))
+          .collect{case name:Name => name}.distinct.sortBy(_.charName)
         listCharacters.find(ch => invalidCharacterNames.contains(ch.charName.trim.toLowerCase)) match {
           case Some(invalidCharacter) =>
             Left(s"The text contains the invalid character name '${invalidCharacter.charName}'")
@@ -40,7 +39,7 @@ object Parser {
         s"There are ${listTruth.length} possible truths. " ++
           {
             if(summaryTruth.truthPieces.exists(tp => tp.state.isDefined))
-              "And summarizing, this is what we know for sure:\n" ++
+              "Summarizing, this is what we know for sure:\n" ++
                 parseTruth(summaryTruth)
             else
               "But as Socrates we claim just to know that we know nothing."
@@ -57,6 +56,13 @@ object Parser {
               parseTruth(truth)
         }.mkString("\n\n")
   }
+
+  def printWorld[W <:World[W]](world:W):String =
+    s"Welcome to ${world.name} :D" + "\n" +
+    world.description + "\n\n" +
+    world.possibleWorldStates(None).map(ws => s"${ws.stringRef}: ${ws.description}").mkString("These are the world states:\n","\n","\n\n") +
+    world.races.map(ws => s"${ws.stringRef}: ${ws.description}").mkString("These are the races in the world:\n","\n","\n\n")
+
 
   private def parseSentence[W <:World[W]](world:W, raw_sentence:String):Either[String, Sentence] = {
     val sentenceRegex = """(\w+): (I am|Someone is|Everyone is|No one is|There are at least \d+|There are exactly \d+|It is|\w+ is)( not | )(\w+)""".r

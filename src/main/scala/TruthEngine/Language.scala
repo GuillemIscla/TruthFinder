@@ -11,7 +11,7 @@ object Language {
     def personality(truth: Truth[_]): Boolean => Boolean //Sometimes personality might depend on states of the truth
   }
 
-  sealed trait Reference[+S <: State]
+  trait Reference[+S <: State]
   case class Name(charName: String) extends Reference[Race]
   trait WorldAspectReference[W <: World[W], +WS <: WorldState[W]] extends Reference[WS]
   trait CollectiveReference extends Reference[Race]
@@ -46,7 +46,7 @@ object Language {
         })
   }
 
-  case class Sentence(speaker:Name, subject:Reference[State], directObject:State, sentenceAffirmation: Boolean, directObjectAffirmation:Boolean) {
+  case class Sentence(speaker:Reference[Race], subject:Reference[State], directObject:State, sentenceAffirmation: Boolean, directObjectAffirmation:Boolean) {
     def compareWithTruth[W <: World[W]](truth: Truth[W]): Option[Boolean] =
     (subject match {
         case Everyone =>
@@ -70,7 +70,7 @@ object Language {
           isExact match {
             case true if matches == number && unknowns == 0 =>
               Some(true) //seeking for exact number of people and we are sure that is the case
-            case true if matches < number && matches + unknowns >= number =>
+            case true if matches <= number && matches + unknowns >= number =>
               None //seeking for exact number of people and we are not sure if that is the case
             case false if matches >= number =>
               Some(true) //seeking for not exact number of people and we are sure that is the case

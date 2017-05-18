@@ -19,7 +19,7 @@ case class Truth[W <: World[W]](world:W, truthPieces:List[TruthPiece[State]]) {
   def charCanSay[S <: State](sentence: Sentence): Boolean = {
     val personality: Boolean => Boolean = //Function that the given character is going to use to talk sentences to us
       (for {
-        truthPiece <- truthPieces.find(_.reference == sentence.speaker)
+        truthPiece <- (world.truthSpeaker :: truthPieces).find(_.reference == sentence.speaker)
         personality <- truthPiece.state collect { case race:Race => race.personality(this)}
       } yield personality)
         .getOrElse(_ => true)

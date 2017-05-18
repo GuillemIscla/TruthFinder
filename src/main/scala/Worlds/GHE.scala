@@ -7,7 +7,8 @@ object GHE extends GHE
 
 trait GHE extends World[GHE] {
   val worldInstance:GHE = GHE
-  val description:String = "This world contains virtuous gods, vicious evils and voluble humans"
+  val name: String = "GHE"
+  val description:String = "This world contains virtuous gods, vicious evils and voluble humans."
 
   def possibleWorldStates(war:Option[WorldAspectReference[GHE, WorldState[GHE]]]):List[WorldState[GHE]] =
     war match {
@@ -22,16 +23,17 @@ trait GHE extends World[GHE] {
     }
 
   val races:List[Race] = List(God, Human, Evil)
+  val truthSpeakerSentences:List[Sentence] = List()
 
 
   sealed trait DayNightState extends WorldState[GHE]
   case object Day extends DayNightState{
     val stringRef:String = "Day"
-    val description:String = "Days are nice, favorable for good behaviour"
+    val description:String = "Days are nice, favorable for good behaviours."
   }
   case object Night extends DayNightState{
     val stringRef:String = "Night"
-    val description:String = "Nights are scary, favorable for bad behaviour"
+    val description:String = "Nights are scary, favorable for bad behaviours."
   }
 
 
@@ -40,7 +42,7 @@ trait GHE extends World[GHE] {
 
   case object Human extends Race {
     val stringRef:String = "Human"
-    val description:String = "Humans speak the truth during the day but they lie at night"
+    val description:String = "Humans speak the truth during the day but they lie at night."
 
     def personality(truth:Truth[_]):Boolean => Boolean =
       (for {
@@ -60,7 +62,7 @@ trait GHE extends World[GHE] {
 
   case object Evil extends Race {
     val stringRef:String = "Evil"
-    val description:String = "Evils always lie"
+    val description:String = "Evils always lie."
 
     def personality(truth:Truth[_]):Boolean => Boolean =
       b => !b //Evil always lie
@@ -68,7 +70,7 @@ trait GHE extends World[GHE] {
 
   case object God extends Race {
     val stringRef:String = "God"
-    val description: String = "Gods always speak the truth"
+    val description: String = "Gods always speak the truth."
 
     def personality(truth:Truth[_]):Boolean => Boolean =
       b => b //God always speak the truth

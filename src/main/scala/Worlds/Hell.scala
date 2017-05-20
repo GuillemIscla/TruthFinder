@@ -1,3 +1,5 @@
+package Worlds
+
 import TruthEngine.Language._
 import TruthEngine.{Truth, World}
 
@@ -20,14 +22,15 @@ trait Hell extends World[Hell] {
         List(GloomyReference)
     }
 
-  val races:List[Race] = List(Lucifer, Deamon, SinnerSoul)
-  val truthSpeakerSentences:List[Sentence] = List(Sentence(TruthSpeakerRef, NumberOfPeople(1, isExact = true), Lucifer, sentenceAffirmation = true, directObjectAffirmation = true))
-
-
-  trait HellCitizen extends Race {
-    def personality(truth:Truth[_]):Boolean => Boolean =
-      b => !b //HellCitizen always lie
+  def checkWorldState(truth: Truth[Hell]):Boolean = { //There is exactly 1 Lucifer
+    val charRaces = truth.truthPieces.collect {
+      case ch: Character =>
+        ch.state
+    }
+    charRaces.exists(_.isEmpty) || charRaces.count(_.contains(Lucifer)) == 1
   }
+
+  val races:List[Race] = List(Lucifer, Daemon, SinnerSoul)
 
   sealed trait GloomyState extends WorldState[Hell]
   sealed trait GloomyReference extends WorldAspectReference[Hell, GloomyState]
@@ -37,13 +40,18 @@ trait Hell extends World[Hell] {
     val description:String = "Yes, gloomy, gloomy... It is never shiny."
   }
 
+  trait HellCitizen extends Race {
+    def personality(truth: Truth[_], text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+      b => !b //HellCitizen always lies
+  }
+
   case object Lucifer extends HellCitizen {
     val stringRef:String = "Lucifer"
     val description: String = "There is one single Lucifer and he always lies."
   }
 
-  case object Deamon extends HellCitizen {
-    val stringRef:String = "Deamon"
+  case object Daemon extends HellCitizen {
+    val stringRef:String = "Daemon"
     val description: String = "They hate it here so much that they always lie."
   }
 

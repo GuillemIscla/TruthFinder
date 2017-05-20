@@ -8,15 +8,15 @@ trait World[W <: World[W]] {
   val description:String
   def possibleWorldStates(war:Option[WorldAspectReference[W, WorldState[W]]] = None):List[WorldState[W]]
   def possibleWorldAspects(ws:Option[WorldState[W]] = None):List[WorldAspectReference[W, WorldState[W]]]
+  def checkWorldState(truth:Truth[W]):Boolean
   val races:List[Race]
-  val truthSpeakerSentences:List[Sentence]
 
   override def toString:String = Parser.printWorld(worldInstance)
 
   def findTruth(raw_text:List[String], oneSolution:Boolean):String =
     Parser.parseText(worldInstance, raw_text).map {
       case (socratesTruth, text) =>
-        Truth.compareTextAndTruth(socratesTruth, truthSpeakerSentences ++ text)
+        Truth.compareTextAndTruth(socratesTruth, text)
     } match {
       case Right(listTruth) =>
         Parser.printResult(listTruth, oneSolution)
@@ -33,19 +33,12 @@ trait World[W <: World[W]] {
       List()
   }
 
-  //The sentences of the TruthSpeaker describe the world as they are added to every conversation and they are true
-  case object TruthSpeakerRace extends Race {
-    def stringRef:String = "TruthSpeaker"
-    def description:String = "Always speaks the truth"
-    def personality(truth: Truth[_]): Boolean => Boolean = b => b
-  }
-  case object TruthSpeakerRef extends Reference[Race]
+  protected def findStates(truth:Truth[_], reference:Reference[State]):List[State] =
+    for {
+      truthPiece <- truth.truthPieces.collect{case tp if tp.reference == reference => tp}
+      truthState <- truthPiece.state
+    } yield truthState
 
-  case object TruthSpeaker extends TruthPiece[Race]{
-    def reference: Reference[Race] = TruthSpeakerRef
-    def state: Option[Race] = Some(TruthSpeakerRace)
-
-    def merge(other:TruthPiece[_]):TruthPiece[Race] = this
-  }
-  val truthSpeaker = TruthSpeaker
+  protected def findCharOfRace(truth:Truth[_], race:Race):List[Name] =
+    truth.truthPieces.collect{case ch:Character if ch.state.contains(race) => ch.reference}
 }

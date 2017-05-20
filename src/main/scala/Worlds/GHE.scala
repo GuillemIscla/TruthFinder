@@ -22,9 +22,9 @@ trait GHE extends World[GHE] {
         List(DayNightReference)
     }
 
-  val races:List[Race] = List(God, Human, Evil)
-  val truthSpeakerSentences:List[Sentence] = List()
+  def checkWorldState(truth:Truth[GHE]):Boolean = true //No state to be checked
 
+  val races:List[Race] = List(God, Human, Evil)
 
   sealed trait DayNightState extends WorldState[GHE]
   case object Day extends DayNightState{
@@ -44,27 +44,22 @@ trait GHE extends World[GHE] {
     val stringRef:String = "Human"
     val description:String = "Humans speak the truth during the day but they lie at night."
 
-    def personality(truth:Truth[_]):Boolean => Boolean =
-      (for {
-        dayNightTruth <- truth.truthPieces.find(_.reference == DayNightReference)
-        dayOrNight <- dayNightTruth.state
-      } yield dayOrNight)
-      .fold[Boolean => Boolean](//In case is Human it depends either on the DayNight
-        _ => true //If we don't know DayNightState, whatever a Human says can be true
-      )({
-        case Day => //During the day Humans tell the truth
+    def personality(truth: Truth[_], text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+      findStates(truth, DayNightReference).headOption match {
+        case Some(Day) => //During the day Humans tell the truth
           b => b
-        case Night => //During the night Humans lie
+        case Some(Night) => //During the night Humans lie
           b => !b
-      })
-
+        case _ =>
+          _ => true //If we don't know DayNightState, whatever a Human says can be true
+      }
   }
 
   case object Evil extends Race {
     val stringRef:String = "Evil"
     val description:String = "Evils always lie."
 
-    def personality(truth:Truth[_]):Boolean => Boolean =
+    def personality(truth: Truth[_], text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       b => !b //Evil always lie
   }
 
@@ -72,7 +67,7 @@ trait GHE extends World[GHE] {
     val stringRef:String = "God"
     val description: String = "Gods always speak the truth."
 
-    def personality(truth:Truth[_]):Boolean => Boolean =
+    def personality(truth: Truth[_], text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       b => b //God always speak the truth
   }
 }

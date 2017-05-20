@@ -1,12 +1,14 @@
+import Worlds._
+
 import scala.io.Source
 
 
 object App {
   def main(args: Array[String]): Unit = {
-    val fileName = """src\main\resources\Hell\Conversation1.txt"""
+    val fileName = """src\main\resources\MagicForest\Conversation9.txt"""
     val conversation =
       Source.fromFile(fileName).getLines().toList
-    val world = Hell
+    val world = MagicForest
     println("----------------")
     println(world)
     println("----------------")

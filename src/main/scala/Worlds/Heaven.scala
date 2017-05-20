@@ -23,12 +23,13 @@ trait Heaven extends World[Heaven] {
     }
 
   val races:List[Race] = List(God, Angel, BlessedSoul)
-  val truthSpeakerSentences:List[Sentence] = List(Sentence(TruthSpeakerRef, NumberOfPeople(1, isExact = true), God, sentenceAffirmation = true, directObjectAffirmation = true))
 
-
-  trait HeavenCitizen extends Race {
-    def personality(truth:Truth[_]):Boolean => Boolean =
-      b => b //HeavenCitizen always speak the truth
+  def checkWorldState(truth: Truth[Heaven]):Boolean = {
+    val charRaces = truth.truthPieces.collect {
+      case ch: Character =>
+        ch.state
+    }
+    charRaces.exists(_.isEmpty) || charRaces.count(_.contains(God)) == 1
   }
 
   sealed trait ShinyState extends WorldState[Heaven]
@@ -37,6 +38,11 @@ trait Heaven extends World[Heaven] {
   case object Shiny extends ShinyState{
     val stringRef:String = "Shiny"
     val description:String = "Yes, shiny, shiny... It is never gloomy."
+  }
+
+  trait HeavenCitizen extends Race {
+    def personality(truth: Truth[_], text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+      b => b //HeavenCitizen always speaks the truth
   }
 
   case object God extends HeavenCitizen {

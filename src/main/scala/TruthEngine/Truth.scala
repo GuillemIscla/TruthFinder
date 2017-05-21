@@ -34,8 +34,11 @@ case class Truth[W <: World[W]](world:W, truthPieces:List[TruthPiece[State]]) {
 }
 
 object Truth {
-  def merge[W <: World[W]](a:Truth[W], b:Truth[W]):Truth[W] = //Merge two truths that preserves the minimum set of certainty
-    Truth(a.world, a.truthPieces.zip(b.truthPieces).map{case (c1, c2) => c1.merge(c2)})
+  def merge[W <: World[W]](t1:Truth[W], t2:Truth[W], customMerge: (TruthPiece[State], TruthPiece[State]) => Option[TruthPiece[State]]):Truth[W] = //Merge two truths that preserves the minimum set of certainty
+    Truth(t1.world, t1.truthPieces.zip(t2.truthPieces).map{
+      case (tp1, tp2) =>
+        customMerge(tp1, tp2).getOrElse(tp1.merge(tp2))
+    })
 
   def compareTextAndTruth[W <: World[W]](truth: Truth[W], text: List[Sentence]):List[Truth[W]]=
     truth.nextAssumptions() match {

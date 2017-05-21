@@ -1,7 +1,8 @@
 package Worlds
 
 import TruthEngine.Language._
-import TruthEngine.{Truth, World}
+import TruthEngine._
+import ParserHelper._
 
 object Heaven extends Heaven
 
@@ -37,7 +38,7 @@ trait Heaven extends World[Heaven] {
   case object ShinyReference extends ShinyReference
   case object Shiny extends ShinyState{
     val stringRef:String = "Shiny"
-    val description:String = "Yes, shiny, shiny... It is never gloomy."
+    val description:String = "Yes, shiny, shiny... It is never gloomy!"
   }
 
   trait HeavenCitizen extends Race {

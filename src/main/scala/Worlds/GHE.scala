@@ -1,7 +1,8 @@
 package Worlds
 
 import TruthEngine.Language._
-import TruthEngine.{Truth, World}
+import TruthEngine._
+import ParserHelper._
 
 object GHE extends GHE
 
@@ -36,7 +37,6 @@ trait GHE extends World[GHE] {
     val description:String = "Nights are scary, favorable for bad behaviours."
   }
 
-
   sealed trait DayNightReference extends WorldAspectReference[GHE, DayNightState]
   case object DayNightReference extends DayNightReference
 
@@ -45,7 +45,7 @@ trait GHE extends World[GHE] {
     val description:String = "Humans speak the truth during the day but they lie at night."
 
     def personality(truth: Truth[_], text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
-      findStates(truth, DayNightReference).headOption match {
+      findState(truth, DayNightReference) match {
         case Some(Day) => //During the day Humans tell the truth
           b => b
         case Some(Night) => //During the night Humans lie

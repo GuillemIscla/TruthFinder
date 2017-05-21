@@ -1,7 +1,8 @@
 package Worlds
 
 import TruthEngine.Language._
-import TruthEngine.{Truth, World}
+import TruthEngine._
+import ParserHelper._
 
 object Hell extends Hell
 
@@ -37,7 +38,7 @@ trait Hell extends World[Hell] {
   case object GloomyReference extends GloomyReference
   case object Gloomy extends GloomyState{
     val stringRef:String = "Gloomy"
-    val description:String = "Yes, gloomy, gloomy... It is never shiny."
+    val description:String = "Yes, gloomy, gloomy... It is never shiny!"
   }
 
   trait HellCitizen extends Race {

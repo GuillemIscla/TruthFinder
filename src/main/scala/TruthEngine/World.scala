@@ -1,6 +1,8 @@
 package TruthEngine
 
 import TruthEngine.Language._
+import TruthEngine.ParserHelper._
+import TruthEngine.PrinterHelper._
 
 trait World[W <: World[W]] {
   val worldInstance:W
@@ -10,18 +12,16 @@ trait World[W <: World[W]] {
   def possibleWorldAspects(ws:Option[WorldState[W]] = None):List[WorldAspectReference[W, WorldState[W]]]
   def checkWorldState(truth:Truth[W]):Boolean
   val races:List[Race]
+  val customParsers:List[Parser[W]] = List()
+  val customPrinters:List[Printer] = List()
+  def customMerge(tp1:TruthPiece[State], tp2:TruthPiece[State]): Option[TruthPiece[State]] = None
 
-  override def toString:String = Parser.printWorld(worldInstance)
+  def printer:Printer = PrinterCollection(customPrinters ++ List(FinalPrinter))
 
-  def findTruth(raw_text:List[String], oneSolution:Boolean):String =
-    Parser.parseText(worldInstance, raw_text).map {
+  def findTruth(raw_text:List[String]):Translation[List[String], List[Truth[W]]] =
+    ParserCollection(worldInstance, RegularWorldState(worldInstance) :: GenericParser(worldInstance) :: customParsers).translateFullScript(raw_text).map {
       case (socratesTruth, text) =>
         Truth.compareTextAndTruth(socratesTruth, text)
-    } match {
-      case Right(listTruth) =>
-        Parser.printResult(listTruth, oneSolution)
-      case Left(error) =>
-        s"There has been an error in the input: $error"
     }
 
   def possibleTruthPieces(s:Reference[_]):List[TruthPiece[State]] = s match {
@@ -33,12 +33,12 @@ trait World[W <: World[W]] {
       List()
   }
 
-  protected def findStates(truth:Truth[_], reference:Reference[State]):List[State] =
-    for {
+  protected def findState(truth:Truth[_], reference:Reference[State]):Option[State] =
+    (for {
       truthPiece <- truth.truthPieces.collect{case tp if tp.reference == reference => tp}
       truthState <- truthPiece.state
-    } yield truthState
+    } yield truthState).headOption
 
-  protected def findCharOfRace(truth:Truth[_], race:Race):List[Name] =
+  protected def findCharsOfRace(truth:Truth[_], race:Race):List[Name] =
     truth.truthPieces.collect{case ch:Character if ch.state.contains(race) => ch.reference}
 }

@@ -1,5 +1,5 @@
 A: I am Wizard
-A: It is BlackMagic
+A: It smells like BlackMagic
 A: B is HumanVisitor
 A: B is not Fairy
 A: B is not Goblin

@@ -46,9 +46,9 @@ object Language {
         })
   }
 
-  case class Sentence(speaker:Reference[Race], subject:Reference[State], directObject:State, sentenceAffirmation: Boolean, directObjectAffirmation:Boolean) {
+  case class Sentence(speaker:Reference[Race], subject:Reference[State], directObject:State, directObjectAffirmation:Boolean) {
     def compareWithTruth[W <: World[W]](truth: Truth[W]): Option[Boolean] =
-    (subject match {
+      subject match {
         case Everyone =>
           val everyone = truth.truthPieces.collect({case ch:Character  => ch})
           everyone.find(_.state.fold(false)(!compareStateAndDirectObject(_))) match {//looking for contradictions
@@ -62,7 +62,7 @@ object Language {
                   Some(true) //case where we are sure that the sentence is true
               }
           }
-        //Optimization for obvious cases (3 people and says: There are 4 Ogres)
+
         case NumberOfPeople(number, isExact) =>
           val everyone = truth.truthPieces.collect({case ch:Character => ch})
           val matches = everyone.count(_.state.fold(false)(compareStateAndDirectObject))
@@ -82,7 +82,7 @@ object Language {
 
         case _ =>
           truth.truthPieces.find(_.reference == subject).flatMap(compareWithTruthPiece)
-      }).map(b => if(sentenceAffirmation) b else !b)
+      }
 
     private def compareWithTruthPiece(tp:TruthPiece[State]):Option[Boolean] =
       tp.reference match {
@@ -93,8 +93,8 @@ object Language {
       }
 
     private def compareStateAndDirectObject(s: State): Boolean =
-      if (directObjectAffirmation) s == directObject
-      else s != directObject
+      if (directObjectAffirmation) s.stringRef == directObject.stringRef
+      else s.stringRef != directObject.stringRef
   }
 
 }

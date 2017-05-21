@@ -1,7 +1,8 @@
 package Worlds
 
 import TruthEngine.Language._
-import TruthEngine.{Truth, World}
+import TruthEngine._
+import ParserHelper._
 
 object MagicForest extends MagicForest
 
@@ -31,19 +32,60 @@ trait MagicForest extends World[MagicForest] {
     }
 
   def checkWorldState(truth: Truth[MagicForest]):Boolean =
-    (findStates(truth, MagicReference).headOption match {
+    (findState(truth, MagicReference) match {
       case Some(WhiteMagic) =>
-        findCharOfRace(truth, Goblin).isEmpty//No Goblins with WhiteMagic
+        findCharsOfRace(truth, Goblin).isEmpty//No Goblins with WhiteMagic
       case Some(BlackMagic) =>
-        findCharOfRace(truth, Fairy).isEmpty//No Fairies with BlackMagic
+        findCharsOfRace(truth, Fairy).isEmpty//No Fairies with BlackMagic
       case _ =>
         true
     }) &&
-      (findCharOfRace(truth, HumanVisitor).length <  //There are more characters than just HumanVisitors
+      (findCharsOfRace(truth, HumanVisitor).length <  //There are more characters than just HumanVisitors
         truth.truthPieces.collect{case ch:Character => ch.reference}.length)
 
 
   val races:List[Race] = List(HumanVisitor, Wizard, Fairy, Goblin)
+
+  override val customParsers:List[Parser[MagicForest]] = List(MagicForestParser)
+  case object MagicForestParser extends Parser[MagicForest] {
+    val forbiddenNames: List[String] = List("smell", "smells", "like")
+    val world: MagicForest = worldInstance
+    val parserName:String = "MagicForestParser"
+
+    def translateScriptSentence(raw_script_sentence: String): Translation[String, Sentence] = {
+      val sentenceRegex = """(\w+): (It) (smells like) (\w+)""".r
+      raw_script_sentence match {
+        case sentenceRegex(speaker, _, _, raw_directObject) =>
+          for {
+            directObject <- parseDirectObject(raw_directObject)
+          } yield Sentence(Name(speaker), MagicReference, directObject, directObjectAffirmation = true)
+        case _ =>
+          NotTranslated(raw_script_sentence)
+      }
+    }
+
+    private def parseDirectObject(raw_directObject:String):Translation[String, WorldState[MagicForest]] = {
+      raw_directObject match {
+        case WhiteMagic.stringRef =>
+          Translated(WhiteMagic)
+        case BlackMagic.stringRef =>
+          Translated(BlackMagic)
+        case otherSmell =>
+          translationError(otherSmell, "this direct object is not a valid smell in the MagicForest")
+      }
+    }
+  }
+
+  override val customPrinters:List[Printer] = List(MagicForestPrinter)
+  case object MagicForestPrinter extends Printer {
+    def translateScriptSentence(raw_script_sentence: TruthPiece[State]): Translation[TruthPiece[State], String] =
+      (raw_script_sentence.reference, raw_script_sentence.state) match {
+        case (_: MagicReference, Some(ws)) =>
+          Translated(s"It smells like $ws")
+        case _ =>
+          NotTranslated(raw_script_sentence)
+      }
+  }
 
   sealed trait MagicState extends WorldState[MagicForest]
   case object WhiteMagic extends MagicState{
@@ -88,8 +130,8 @@ trait MagicForest extends World[MagicForest] {
     val stringRef:String = "HumanVisitor"
     val description:String = "They speak the truth during the day but they lie at night... unless there is a Wizard! Then their personality changes according to the magic used. The forest can accept some of them but at least there is someone who is not HumanVisitor."
     def personality(truth: Truth[_], text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
-        if(findCharOfRace(truth, Wizard).nonEmpty) //If there is a Wizard we need to check if he is using WhiteMagic or BlackMagic
-          findStates(truth, MagicReference).headOption match {
+        if(findCharsOfRace(truth, Wizard).nonEmpty) //If there is a Wizard we need to check if he is using WhiteMagic or BlackMagic
+          findState(truth, MagicReference) match {
             case Some(WhiteMagic) => //If a magician uses white magic HumanVisitors speak the truth
               b => b
             case Some(BlackMagic) => //If a magician uses black magic HumanVisitors lie
@@ -98,7 +140,7 @@ trait MagicForest extends World[MagicForest] {
               _ => true //If we don't know MagicState, whatever a HumanVisitor says can be true
           }
         else
-          humanPersonality(findStates(truth, DayNightReference).headOption)
+          humanPersonality(findState(truth, DayNightReference))
 
   }
 
@@ -106,7 +148,7 @@ trait MagicForest extends World[MagicForest] {
     val stringRef:String = "Wizard"
     val description:String = "They are Humans after all, so speak the truth during the day but they lie at night. When they are around they use the Magic available to change HumanVisitors personality. They are already magic so magic environment does not affect them."
     def personality(truth: Truth[_], text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
-      humanPersonality(findStates(truth, DayNightReference).headOption)
+      humanPersonality(findState(truth, DayNightReference))
   }
 
   case object Fairy extends Race {

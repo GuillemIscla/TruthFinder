@@ -3,6 +3,9 @@ package TruthEngine
 import TruthEngine.Language._
 import TruthEngine.ParserHelper._
 import TruthEngine.PrinterHelper._
+import TruthEngine.Truth.Truth
+
+import scala.reflect.ClassTag
 
 trait World[W <: World[W]] {
   val worldInstance:W
@@ -10,18 +13,25 @@ trait World[W <: World[W]] {
   val description:String
   def possibleWorldStates(war:Option[WorldAspectReference[W, WorldState[W]]] = None):List[WorldState[W]]
   def possibleWorldAspects(ws:Option[WorldState[W]] = None):List[WorldAspectReference[W, WorldState[W]]]
-  def checkWorldState(truth:Truth[W]):Boolean
-  val races:List[Race]
-  val customParsers:List[Parser[W]] = List()
-  val customPrinters:List[Printer] = List()
+  def checkConsistency(truth:Truth):Boolean
   def customMerge(tp1:TruthPiece[State], tp2:TruthPiece[State]): Option[TruthPiece[State]] = None
+  def extraDeductions(truths:List[Truth]):List[String] = List()
+  val races:List[Race]
+  lazy val customParsers:List[LineParser[W]] = List()
+  lazy val customPrinters:List[TruthPiecePrinter] = List()
 
-  def printer:Printer = PrinterCollection(customPrinters ++ List(FinalPrinter))
+  lazy val truthPrinters:List[Translator[Truth, String]] = List(TruthPrinter(customPrinters ++ List(FinalPrinter)))
 
-  def findTruth(raw_text:List[String]):Translation[List[String], List[Truth[W]]] =
-    ParserCollection(worldInstance, RegularWorldState(worldInstance) :: GenericParser(worldInstance) :: customParsers).translateFullScript(raw_text).map {
+  case class TruthPrinter[W <:World[W]](translatorCollection:List[Translator[TruthPiece[State], String]]) extends TextTranslator[TruthPiece[State], String, String] {
+    val scriptTag:ClassTag[TruthPiece[State]] = implicitly[ClassTag[TruthPiece[State]]]
+    def generalCheck(listTranslated: List[String]): Translation[List[String], List[String]] = Translated(listTranslated)
+    def formatResult(listTranslated: List[String]): String = listTranslated.mkString("\n")
+  }
+
+  def findTruth(raw_text:List[String]):Translation[List[String], List[Truth]] =
+    TextParser(worldInstance, RegularWorldState(worldInstance) :: GenericParser(worldInstance) :: customParsers).translate(raw_text).map {
       case (socratesTruth, text) =>
-        Truth.compareTextAndTruth(socratesTruth, text)
+         Truth.compareTextAndTruth(this, socratesTruth, text)
     }
 
   def possibleTruthPieces(s:Reference[_]):List[TruthPiece[State]] = s match {
@@ -33,12 +43,26 @@ trait World[W <: World[W]] {
       List()
   }
 
-  protected def findState(truth:Truth[_], reference:Reference[State]):Option[State] =
+  protected def findState(truth:Truth, reference:Reference[State]):Option[State] =
     (for {
-      truthPiece <- truth.truthPieces.collect{case tp if tp.reference == reference => tp}
+      truthPiece <- truth.collect{case tp if tp.reference == reference => tp}
       truthState <- truthPiece.state
     } yield truthState).headOption
 
-  protected def findCharsOfRace(truth:Truth[_], race:Race):List[Name] =
-    truth.truthPieces.collect{case ch:Character if ch.state.contains(race) => ch.reference}
+  protected def findCharsOfRace(truth:Truth, race:Race):List[Name] =
+    truth.collect{case ch:Character if ch.state.contains(race) => ch.reference}
+
+  protected def traverseTruthResults(truths:List[Truth]):List[(Reference[State], List[State])] =
+    truths.headOption.fold(List.empty[(Reference[State], List[Option[State]])])(
+      head =>
+        truths.tail.foldLeft[List[(Reference[State], List[Option[State]])]](
+          head.map{tp => (tp.reference, List(tp.state))}
+        ){
+          case (list, truth) =>
+            list.zip(truth.map{tp => (tp.reference, tp.state)}).map{
+              case (listTp, newTp) =>
+                (listTp._1, newTp._2 :: listTp._2)
+            }
+        }
+    ).map{case (ref, listOptionState) => (ref, listOptionState.flatten)}
 }

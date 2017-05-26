@@ -3,6 +3,7 @@ package Worlds
 import TruthEngine.Language._
 import TruthEngine._
 import ParserHelper._
+import TruthEngine.Truth.Truth
 
 object Hell extends Hell
 
@@ -23,8 +24,8 @@ trait Hell extends World[Hell] {
         List(GloomyReference)
     }
 
-  def checkWorldState(truth: Truth[Hell]):Boolean = { //There is exactly 1 Lucifer
-    val charRaces = truth.truthPieces.collect {
+  def checkConsistency(truth: Truth):Boolean = { //There is exactly 1 Lucifer
+    val charRaces = truth.collect {
       case ch: Character =>
         ch.state
     }
@@ -42,7 +43,7 @@ trait Hell extends World[Hell] {
   }
 
   trait HellCitizen extends Race {
-    def personality(truth: Truth[_], text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       b => !b //HellCitizen always lies
   }
 

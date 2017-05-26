@@ -1,124 +1,148 @@
 package TruthEngine
 
 import TruthEngine.Language._
+import TruthEngine.Truth.Truth
 
-trait Parser[W <:World[W]] extends Translator[String, Sentence, (Truth[W], List[Sentence])]{
+import scala.reflect.ClassTag
+
+trait ParserBase[W <:World[W]] {
   val world:W
   val forbiddenNames:List[String]
   val parserName:String
-
-  def translateScriptSentence(raw_script_sentence: String): Translation[String, Sentence]
-
-  def script_general_check(resultList:List[Sentence]): Translation[List[Sentence], (Truth[W], List[Sentence])] = {
-    val listCharacters: List[Name] =
-        (resultList.map(_.speaker) ++ resultList.map(_.subject))
-          .collect { case name: Name => name }.distinct.sortBy(_.charName)
-      listCharacters.find(ch => forbiddenNames.contains(ch.charName.trim.toLowerCase)) match {
-        case Some(invalidCharacter) =>
-          translationError(s"""Sentence where the character named: "${invalidCharacter.charName}" speaks or is mentioned""", "Is an invalid name")
-        case None =>
-          val truthPieces = world.possibleWorldAspects().map(WorldAspect(_, None)) ++ listCharacters.map(Character(_, None))
-          Translated((Truth(world, truthPieces), resultList))
-      }
-    }
-
-  protected def translationError[Script, Result](bad_script:String, parserProblemWithScript:String):TranslationError[Script, Result] =
-    TranslationError(bad_script, s"$parserName claimed that: $parserProblemWithScript")
 }
 
-case class ParserCollection[W <:World[W]](world:W, translatorList:List[Parser[W]]) extends Parser[W] with TranslatorCollection[String, Sentence, (Truth[W], List[Sentence])]{
-  val parserName:String = translatorList.map(_.parserName).mkString("ParserCollection which contains Parsers(", ", ", ")")
-  val forbiddenNames:List[String] = translatorList.foldLeft(List.empty[String])({
-    case (fn, p) =>
-      fn ++ p.forbiddenNames
-  })
+trait LineParser[W <:World[W]] extends Translator[String, Sentence] with ParserBase[W]
+
+case class TextParser[W <:World[W]](world:W, translatorCollection:List[LineParser[W]]) extends TextTranslator[String, Sentence,(Truth, List[Sentence])] with ParserBase[W] {
+  val parserName:String = s"TextParser containing ${translatorCollection.map(_.parserName).mkString("(",",",")")}"
+  val forbiddenNames:List[String] =
+    translatorCollection.foldLeft[List[String]](List()){
+      case (acc, otherTranslator) =>
+        acc ++ otherTranslator.forbiddenNames
+    }
+  val scriptTag:ClassTag[String] = implicitly[ClassTag[String]]
+
+  def generalCheck(listTranslated:List[Sentence]):Translation[List[Sentence], List[Sentence]] = {
+    listCharacters(listTranslated).find(ch => forbiddenNames.contains(ch.charName.trim.toLowerCase)) match {
+      case Some(invalidCharacter) =>
+        TranslationError(s"""Sentence where the character named: "${invalidCharacter.charName}" speaks or is mentioned""", s"""'${invalidCharacter.charName}' is an invalid character name""")
+      case None =>
+        Translated(listTranslated)
+    }
+  }
+
+  def formatResult(listTranslated:List[Sentence]):(Truth, List[Sentence]) = {
+    val socratesTruth:Truth =
+      world.possibleWorldAspects().map(WorldAspect(_, None)) ++
+        listCharacters(listTranslated).map(Character(_, None))
+    (socratesTruth, listTranslated)
+  }
+
+  private def listCharacters(listTranslated:List[Sentence]): List[Name] =
+    (listTranslated.map(_.speaker) ++ listTranslated.map(_.subject) ++ listTranslated.map(_.directObject))
+      .collect { case name: Name => name }.distinct.sortBy(_.charName)
+
 }
 
 object ParserHelper {//With the parsers here the non-copulative verbs are parsed
-  case class GenericParser[W <:World[W]](world:W) extends Parser[W] {
+  case class GenericParser[W <:World[W]](world:W) extends LineParser[W] {
     val parserName:String = "GenericParser"
     val forbiddenNames:List[String] = List("i", "someone", "everyone", "no one", "there", "are", "exactly", "am", "not")
 
-    def translateScriptSentence(raw_script_sentence:String):Translation[String, Sentence] = {
-      val sentenceRegex = """(\w+): (I am|Someone is|Everyone is|No one is|There are at least \d+|There are exactly \d+|\w+ is)( not | )(\w+)""".r
-      raw_script_sentence match {
-        case sentenceRegex(speaker, raw_subject_verb, maybeNot, raw_directObject) =>
+    def translate(script:String):Translation[String, Sentence] = {
+      val sentenceRegex = """(\w+): (I am|Someone is|Everyone is|No one is|There (is|are) (at least|at most|exactly) \d+|\w+ is)( not | )(\w+)""".r
+      script match {
+        case sentenceRegex(speaker, raw_subject_verb, _, _, maybeNot, raw_directObject) =>
           for{
-            subject <- parseSubject(speaker, raw_subject_verb)
-            directObject <- parseDirectObject(raw_script_sentence, raw_directObject, world.races)
+            _ <- NotTranslated[String, Sentence](script)
+            subject <- parseSubject(speaker, raw_subject_verb).newTranslation[Sentence]
+            directObject <- parseDirectObject(script, raw_directObject, world.races).newTranslation[Sentence]
             directObjectAffirmation <- parseDirectObjectAffirmation(maybeNot)
           } yield Sentence(Name(speaker), subject, directObject, directObjectAffirmation)
         case _ =>
-          NotTranslated(raw_script_sentence)
+          NotTranslated(script)
       }
     }
 
     private def parseSubject(speaker:String, raw_subject_verb:String):Translation[String, Reference[State]] = {
-      val atLeastRegex = """(There are at least) (\d+)""".r
-      val exactlyRegex = """(There are exactly) (\d+)""".r
+      val atLeastRegex = """(There are at least|There is at least) (\d+)""".r
+      val atMostRegex = """(There are at most|There is at most) (\d+)""".r
+      val exactlyRegex = """(There are exactly|There is exactly) (\d+)""".r
       val nameRegex = """(\w+) (is)""".r
 
       raw_subject_verb match {
         case "I am" =>
           Translated(Name(speaker))
         case "Someone is" =>
-          Translated(NumberOfPeople(1, isExact = false))
+          Translated(NumberOfPeople(1, MoreOrEqual))
         case "Everyone is" =>
           Translated(Everyone)
         case "No one is" =>
-          Translated(NumberOfPeople(0, isExact = true))
-        case atLeastRegex(_, n) if n.toInt < 0 =>
-          translationError(raw_subject_verb, "this 'atLeast' expression contains a negative number")
+          Translated(NumberOfPeople(0, Exactly))
         case atLeastRegex(_, n) =>
-          Translated(NumberOfPeople(n.toInt, isExact = false))
-        case exactlyRegex(_, n) if n.toInt < 0 =>
-          translationError(raw_subject_verb, "this 'exactly' expression contains a negative number")
+          Translated(NumberOfPeople(n.toInt, MoreOrEqual))
+        case atMostRegex(_, n) =>
+          Translated(NumberOfPeople(n.toInt, LessOrEqual))
         case exactlyRegex(_, n) =>
-          Translated(NumberOfPeople(n.toInt, isExact = true))
+          Translated(NumberOfPeople(n.toInt, Exactly))
         case nameRegex(name, _) =>
           Translated(Name(name))
         case _ =>
-          translationError(raw_subject_verb, "thought it could translate this subject + verb but failed")
+          TranslationError(raw_subject_verb, "thought it could translate this subject + verb but failed")
       }
     }
 
     private def parseDirectObject(raw_sentence:String, raw_directObject:String, possibleRaces:List[Race]):Translation[String, Race] =
       possibleRaces.map(r => r.stringRef -> r).toMap.get(raw_directObject).fold[Translation[String, Race]](
-        translationError(raw_directObject, "thought it could translate this direct object but failed")
+        TranslationError(raw_directObject, "thought it could translate this direct object but failed")
       )(Translated.apply)
 
     private def parseDirectObjectAffirmation(maybeNot:String):Translation[String, Boolean] =
       Translated(maybeNot != " not ")
   }
 
-  case class RegularWorldState[W <:World[W]](world:W) extends Parser[W] {
+  case class RegularWorldState[W <:World[W]](world:W) extends LineParser[W] {
     val parserName:String = "RegularWorldState"
     val forbiddenNames: List[String] = List("it")
 
-    def translateScriptSentence(raw_script_sentence: String): Translation[String, Sentence] = {
+    def translate(script: String): Translation[String, Sentence] = {
       val sentenceRegex = """(\w+): (It is)( not|) (\w+)""".r
-      raw_script_sentence match {
+      script match {
         case sentenceRegex(speaker, _, maybeNot, raw_directObject) =>
           for {
-            subjectDirectObject <- parseSubjectDirectObject(raw_directObject, world.possibleWorldStates(None))
-            (subject, directObject) = subjectDirectObject
+            _ <- NotTranslated[String, Sentence](script)
+            subject <- parseSubject(raw_directObject, world.possibleWorldStates(None)).newTranslation[Sentence]
+            directObject <- parseDirectObject(raw_directObject, world.possibleWorldStates(None)).newTranslation[Sentence]
             directObjectAffirmation <- parseDirectObjectAffirmation(maybeNot)
           } yield Sentence(Name(speaker), subject, directObject, directObjectAffirmation)
         case _ =>
-          NotTranslated(raw_script_sentence)
+          NotTranslated(script)
       }
     }
 
-    private def parseSubjectDirectObject(raw_directObject:String, possibleWorldStates:List[WorldState[W]]): Translation[String, (WorldAspectReference[W, WorldState[W]], WorldState[W])] = {
+    private def parseSubject(raw_directObject:String, possibleWorldStates:List[WorldState[W]]): Translation[String, WorldAspectReference[W, WorldState[W]]] = {
       val statesMap = possibleWorldStates.map(r => r.stringRef -> r).toMap
-      statesMap.get(raw_directObject).fold[Translation[String, (WorldAspectReference[W, WorldState[W]], WorldState[W])]](TranslationError(raw_directObject, "Parser RegularWorldState claims that this direct object is an invalid direct object")){
+      statesMap.get(raw_directObject).fold[Translation[String, WorldAspectReference[W, WorldState[W]]]](TranslationError(raw_directObject, s"$raw_directObject is an invalid direct object")){
         case wst: WorldState[W]@unchecked =>
           world.possibleWorldAspects(Some(wst)).headOption
-            .fold[Translation[String, (WorldAspectReference[W, WorldState[W]], WorldState[W])]](
-              translationError(s"Creator of the world: $world speech", s"the possibleWorldAspects function of the world: $world is badly defined")
-            )(was => Translated((was, wst)))
+            .fold[Translation[String, WorldAspectReference[W, WorldState[W]]]](
+            TranslationError(s"Creator of the world: $world speech", s"the possibleWorldAspects function of the world: $world is badly defined")
+            )(Translated.apply)
         case _ =>
-          translationError(raw_directObject, "this direct object references to a wrong world state")
+          TranslationError(raw_directObject, "this direct object references to a wrong world state")
+      }
+    }
+
+    private def parseDirectObject(raw_directObject:String, possibleWorldStates:List[WorldState[W]]): Translation[String, WorldState[W]] = {
+      val statesMap = possibleWorldStates.map(r => r.stringRef -> r).toMap
+      statesMap.get(raw_directObject).fold[Translation[String, WorldState[W]]](TranslationError(raw_directObject, s"$raw_directObject is an invalid direct object")){
+        case wst: WorldState[W]@unchecked =>
+          world.possibleWorldAspects(Some(wst)).headOption
+            .fold[Translation[String, WorldState[W]]](
+            TranslationError(s"Creator of the world: $world speech", s"the possibleWorldAspects function of the world: $world is badly defined")
+          )(_ => Translated(wst))
+        case _ =>
+          TranslationError(raw_directObject, "this direct object references to a wrong world state")
       }
     }
 

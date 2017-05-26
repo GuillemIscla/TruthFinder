@@ -3,6 +3,7 @@ package Worlds
 import TruthEngine.Language._
 import TruthEngine._
 import ParserHelper._
+import TruthEngine.Truth.Truth
 
 object Heaven extends Heaven
 
@@ -25,8 +26,8 @@ trait Heaven extends World[Heaven] {
 
   val races:List[Race] = List(God, Angel, BlessedSoul)
 
-  def checkWorldState(truth: Truth[Heaven]):Boolean = {
-    val charRaces = truth.truthPieces.collect {
+  def checkConsistency(truth: Truth):Boolean = {
+    val charRaces = truth.collect {
       case ch: Character =>
         ch.state
     }
@@ -42,7 +43,7 @@ trait Heaven extends World[Heaven] {
   }
 
   trait HeavenCitizen extends Race {
-    def personality(truth: Truth[_], text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       b => b //HeavenCitizen always speaks the truth
   }
 

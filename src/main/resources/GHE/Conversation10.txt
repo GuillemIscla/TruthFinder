@@ -1,0 +1,6 @@
+A: I am not Evil
+A: I am not God
+B: I am not Evil
+B: I am not God
+C: I am Human
+A: There are at least 3 Human

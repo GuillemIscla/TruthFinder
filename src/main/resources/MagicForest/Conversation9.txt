@@ -1,2 +1,4 @@
 A: I am Fairy
-B: I am Goblin
+A: I am HumanVisitor
+A: I am Wizard
+A: I am Goblin

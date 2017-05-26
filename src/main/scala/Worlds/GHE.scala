@@ -3,6 +3,7 @@ package Worlds
 import TruthEngine.Language._
 import TruthEngine._
 import ParserHelper._
+import TruthEngine.Truth.Truth
 
 object GHE extends GHE
 
@@ -23,7 +24,7 @@ trait GHE extends World[GHE] {
         List(DayNightReference)
     }
 
-  def checkWorldState(truth:Truth[GHE]):Boolean = true //No state to be checked
+  def checkConsistency(truth:Truth):Boolean = true //No state to be checked
 
   val races:List[Race] = List(God, Human, Evil)
 
@@ -44,7 +45,7 @@ trait GHE extends World[GHE] {
     val stringRef:String = "Human"
     val description:String = "Humans speak the truth during the day but they lie at night."
 
-    def personality(truth: Truth[_], text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       findState(truth, DayNightReference) match {
         case Some(Day) => //During the day Humans tell the truth
           b => b
@@ -59,7 +60,7 @@ trait GHE extends World[GHE] {
     val stringRef:String = "Evil"
     val description:String = "Evils always lie."
 
-    def personality(truth: Truth[_], text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       b => !b //Evil always lie
   }
 
@@ -67,7 +68,7 @@ trait GHE extends World[GHE] {
     val stringRef:String = "God"
     val description: String = "Gods always speak the truth."
 
-    def personality(truth: Truth[_], text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       b => b //God always speak the truth
   }
 }

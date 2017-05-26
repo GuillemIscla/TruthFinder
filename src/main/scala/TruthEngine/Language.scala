@@ -1,5 +1,7 @@
 package TruthEngine
 
+import TruthEngine.Truth.Truth
+
 object Language {
 
   trait State {
@@ -8,15 +10,20 @@ object Language {
   }
   trait WorldState[W <: World[W]] extends State
   trait Race extends State {
-    def personality(truth: Truth[_], text:List[Sentence], sentenceIndex:Int): Boolean => Boolean //Sometimes personality might depend on states of the truth
+    def personality(truthPieces: List[TruthPiece[State]], text:List[Sentence], sentenceIndex:Int): Boolean => Boolean //Sometimes personality might depend on states of the truth
   }
 
   trait Reference[+S <: State]
   case class Name(charName: String) extends Reference[Race]
   trait WorldAspectReference[W <: World[W], +WS <: WorldState[W]] extends Reference[WS]
   trait CollectiveReference extends Reference[Race]
+  trait PeopleCounter
+  case object Exactly extends PeopleCounter
+  case object MoreOrEqual extends PeopleCounter
+  case object LessOrEqual extends PeopleCounter
   case object Everyone extends CollectiveReference
-  case class NumberOfPeople(number:Int, isExact:Boolean) extends CollectiveReference
+  case class NumberOfPeople(number:Int, isExact:PeopleCounter) extends CollectiveReference
+
 
   trait TruthPiece[+S <: State] {
     def reference: Reference[S]
@@ -47,10 +54,10 @@ object Language {
   }
 
   case class Sentence(speaker:Reference[Race], subject:Reference[State], directObject:State, directObjectAffirmation:Boolean) {
-    def compareWithTruth[W <: World[W]](truth: Truth[W]): Option[Boolean] =
+    def compareWithTruth(truth: Truth): Option[Boolean] =
       subject match {
         case Everyone =>
-          val everyone = truth.truthPieces.collect({case ch:Character  => ch})
+          val everyone = truth.collect({case ch:Character  => ch})
           everyone.find(_.state.fold(false)(!compareStateAndDirectObject(_))) match {//looking for contradictions
             case Some(_) =>
               Some(false)//case where we could find a contradiction
@@ -63,25 +70,29 @@ object Language {
               }
           }
 
-        case NumberOfPeople(number, isExact) =>
-          val everyone = truth.truthPieces.collect({case ch:Character => ch})
+        case NumberOfPeople(number, peopleCounter) =>
+          val everyone = truth.collect({case ch:Character => ch})
           val matches = everyone.count(_.state.fold(false)(compareStateAndDirectObject))
           val unknowns = everyone.count(_.state.isEmpty)
-          isExact match {
-            case true if matches == number && unknowns == 0 =>
+          peopleCounter match {
+            case Exactly if matches == number && unknowns == 0 =>
               Some(true) //seeking for exact number of people and we are sure that is the case
-            case true if matches <= number && unknowns >= 0 =>
+            case Exactly if matches <= number && unknowns >= 0 =>
               None //seeking for exact number of people and we are not sure if that is the case
-            case false if matches >= number =>
-              Some(true) //seeking for not exact number of people and we are sure that is the case
-            case false if matches + unknowns >= number =>
-              None //seeking for not exact number of people and we are not sure if that is the case
+            case MoreOrEqual if matches >= number =>
+              Some(true) //seeking for exact number of people or more and we are sure that is the case
+            case MoreOrEqual if matches + unknowns >= number =>
+              None //seeking for exact number of people or more and we are not sure if that is the case
+            case LessOrEqual if matches + unknowns <= number =>
+              Some(true) //seeking for exact number of people or less and we are sure that is the case
+            case LessOrEqual if matches <= number =>
+              None //seeking for exact number of people or less and we are not sure if that is the case
             case _ =>
               Some(false) //otherwise is a contradiction
           }
 
         case _ =>
-          truth.truthPieces.find(_.reference == subject).flatMap(compareWithTruthPiece)
+          truth.find(_.reference == subject).flatMap(compareWithTruthPiece)
       }
 
     private def compareWithTruthPiece(tp:TruthPiece[State]):Option[Boolean] =

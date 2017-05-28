@@ -10,9 +10,9 @@ object PrinterHelper {
     def translate(script: TruthPiece[State]): Translation[TruthPiece[State], String] =
       (script.reference, script.state) match {
         case (_: WorldAspectReference[_, _], Some(ws)) =>
-          Translated(s"It is $ws")
+          Translated(s"It is ${ws.stringRef}")
         case (Name(charName), Some(race)) =>
-          Translated(s"$charName is $race")
+          Translated(s"$charName is ${race.stringRef}")
         case _ =>
           NotTranslated(script)
       }

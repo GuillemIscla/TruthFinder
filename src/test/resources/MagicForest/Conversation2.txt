@@ -1,0 +1,3 @@
+A: I am Fairy
+A: It is Night
+A: I am HumanVisitor

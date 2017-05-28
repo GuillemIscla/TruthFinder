@@ -8,7 +8,7 @@ object Language {
     def stringRef:String
     def description:String
   }
-  trait WorldState[W <: World[W]] extends State
+  trait WorldState[+W] extends State
   trait Race extends State {
     def personality(truthPieces: List[TruthPiece[State]], text:List[Sentence], sentenceIndex:Int): Boolean => Boolean //Sometimes personality might depend on states of the truth
   }
@@ -77,7 +77,7 @@ object Language {
           peopleCounter match {
             case Exactly if matches == number && unknowns == 0 =>
               Some(true) //seeking for exact number of people and we are sure that is the case
-            case Exactly if matches <= number && unknowns >= 0 =>
+            case Exactly if matches <= number && unknowns >= number - matches=>
               None //seeking for exact number of people and we are not sure if that is the case
             case MoreOrEqual if matches >= number =>
               Some(true) //seeking for exact number of people or more and we are sure that is the case

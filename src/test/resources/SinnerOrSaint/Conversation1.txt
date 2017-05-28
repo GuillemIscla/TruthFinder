@@ -1,0 +1,5 @@
+A: It feels there is some AngelPresence
+A: I am Human
+B: I am not Human
+A: I am Angel
+B: I am Angel

@@ -1,0 +1,3 @@
+A: I am King
+A: B is not Queen
+B: The suit is Diamonds

@@ -24,7 +24,7 @@ trait Poker extends World[Poker] {
     }
 
   def checkConsistency(truth:Truth):Boolean =
-    truth.count( tp => tp.state.contains(Joker)) <= 1
+    truth.count(_.state.contains(Joker)) <= 1
 
   val races:List[Race] = List(Ace, King, Queen, Prince, Joker) ++ (2 until 10).map(v => Number(Some(v)))
 
@@ -96,13 +96,27 @@ trait Poker extends World[Poker] {
 
   case object PokerPrinter extends TruthPiecePrinter {
     def translate(raw_script_sentence: TruthPiece[State]): Translation[TruthPiece[State], String] =
-      (raw_script_sentence.reference, raw_script_sentence.state) match {
-        case (_: SuitReference, Some(ws:Suit)) =>
-          Translated(s"The suit is ${ws.unicodeSymbol}")
+      raw_script_sentence match {
+        case Character(Name(charName), Some(Number(Some(value)))) =>
+          Translated(s"$charName is a Number $value")
+        case Character(Name(charName), Some(Number(None))) =>
+          Translated(s"$charName is a Number but we don't know its value")
+        case WorldAspect(_, Some(suit:Suit)) =>
+          Translated(s"The suit is ${suit.unicodeSymbol}")
         case _ =>
           NotTranslated(raw_script_sentence)
       }
   }
+
+  override def customMerge(tp1:TruthPiece[State], tp2:TruthPiece[State]): Option[TruthPiece[State]] =
+    (tp1, tp2) match {
+      case (Character(reference1, Some(Number(Some(value1)))), Character(reference2, Some(Number(Some(value2))))) if reference1 == reference2 && value1 == value2=>
+        Some(Character(reference1, Some(Number(Some(value1)))))
+      case (Character(reference1, Some(Number(_))), Character(reference2, Some(Number(_)))) if reference1 == reference2 =>
+        Some(Character(reference1, Some(Number(None))))
+      case _ =>
+        None
+    }
 
   case object Ace extends Race {
     val stringRef: String = "Ace"

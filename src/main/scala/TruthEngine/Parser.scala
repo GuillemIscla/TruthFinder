@@ -25,7 +25,7 @@ case class TextParser[W <:World[W]](world:W, translatorCollection:List[LineParse
   def generalCheck(listTranslated:List[Sentence]):Translation[List[Sentence], List[Sentence]] = {
     listCharacters(listTranslated).find(ch => forbiddenNames.contains(ch.charName.trim.toLowerCase)) match {
       case Some(invalidCharacter) =>
-        TranslationError(s"""Sentence where the character named: "${invalidCharacter.charName}" speaks or is mentioned""", s"""'${invalidCharacter.charName}' is an invalid character name""")
+        TranslationError.invalidCharacterError(invalidCharacter.charName)
       case None =>
         Translated(listTranslated)
     }
@@ -50,15 +50,15 @@ object ParserHelper {//With the parsers here the non-copulative verbs are parsed
     val forbiddenNames:List[String] = List("i", "someone", "everyone", "no one", "there", "are", "exactly", "am", "not")
 
     def translate(script:String):Translation[String, Sentence] = {
-      val sentenceRegex = """(\w+): (I am|Someone is|Everyone is|No one is|There (is|are) (at least|at most|exactly) \d+|\w+ is)( not | )(\w+)""".r
+      val sentenceRegex = """(\w+): (I am|Someone is|Everyone is|No one is|There (is|are) (at least|at most|exactly) \d+|\w+ is)( not|) (.+)""".r
       script match {
         case sentenceRegex(speaker, raw_subject_verb, _, _, maybeNot, raw_directObject) =>
-          for{
+          (for{
             _ <- NotTranslated[String, Sentence](script)
             subject <- parseSubject(speaker, raw_subject_verb).newTranslation[Sentence]
             directObject <- parseDirectObject(script, raw_directObject, world.races).newTranslation[Sentence]
             directObjectAffirmation <- parseDirectObjectAffirmation(maybeNot)
-          } yield Sentence(Name(speaker), subject, directObject, directObjectAffirmation)
+          } yield Sentence(Name(speaker), subject, directObject, directObjectAffirmation)).translateFrom[String]
         case _ =>
           NotTranslated(script)
       }
@@ -98,15 +98,15 @@ object ParserHelper {//With the parsers here the non-copulative verbs are parsed
       )(Translated.apply)
 
     private def parseDirectObjectAffirmation(maybeNot:String):Translation[String, Boolean] =
-      Translated(maybeNot != " not ")
+      Translated(maybeNot != " not")
   }
 
-  case class RegularWorldState[W <:World[W]](world:W) extends LineParser[W] {
+  case class RegularWorldStateParser[W <:World[W]](world:W) extends LineParser[W] {
     val parserName:String = "RegularWorldState"
     val forbiddenNames: List[String] = List("it")
 
     def translate(script: String): Translation[String, Sentence] = {
-      val sentenceRegex = """(\w+): (It is)( not|) (\w+)""".r
+      val sentenceRegex = """(\w+): (It is)( not|) (.+)""".r
       script match {
         case sentenceRegex(speaker, _, maybeNot, raw_directObject) =>
           for {
@@ -147,7 +147,7 @@ object ParserHelper {//With the parsers here the non-copulative verbs are parsed
     }
 
     private def parseDirectObjectAffirmation(maybeNot:String):Translation[String, Boolean] =
-      Translated(maybeNot != " not ")
+      Translated(maybeNot != " not")
   }
 
 }

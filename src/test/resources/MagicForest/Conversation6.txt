@@ -1,0 +1,7 @@
+A: I am Wizard
+A: There is BlackMagic around
+A: B is HumanVisitor
+A: B is not Fairy
+A: B is not Goblin
+B: C is not Goblin
+A: I am Wizard

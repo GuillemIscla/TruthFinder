@@ -1,0 +1,4 @@
+A: I am King
+A: B is Queen
+A: B is Prince
+B: I am not Joker

@@ -10,8 +10,8 @@ import scala.reflect.ClassTag
 object App {
   def main(args: Array[String]): Unit = {
     val world = SinnerOrSaint
-    val conversationNumber = 1
-    val oneSolution:Boolean = true
+    val conversationNumber = 4
+    val oneSolution:Boolean = false
 
     val fileName = s"src\\main\\resources\\${world.name}\\Conversation$conversationNumber.txt"
     val conversation =
@@ -67,7 +67,7 @@ object UserInterface{
       }
 
   private def headersFooters[W <:World[W]](world:World[W], truths:List[Truth]):(String, String) =
-    (s"There ${if (truths.length == 1) "is" else "are"} ${truths.length} possible truth${if (truths.length == 1) "" else "s"}.\n",
+    (truths.headOption.fold("There are no possible truths")(_ => s"There ${if (truths.length == 1) "is" else "are"} ${truths.length} possible truth${if (truths.length == 1) "" else "s"}.\n"),
     world.extraDeductions(truths).mkString("\n", "\n", ""))
 
   case class AppPrinter[W <:World[W]](translatorCollection:List[Translator[List[TruthPiece[State]], String]], oneSolution:Boolean, header:Option[String] = None, footer:Option[String] = None) extends TextTranslator[List[TruthPiece[State]], String, String] {
@@ -76,7 +76,7 @@ object UserInterface{
 
     def formatResult(listTranslated:List[String]):String =
       header.fold("")(_ ++ "\n") ++
-      listTranslated.headOption.fold("There are no possible truths")(
+      listTranslated.headOption.fold("")(
         head =>
           if (oneSolution) {
             if (head.isEmpty) "But as Socrates we claim just to know that we know nothing."
@@ -87,37 +87,5 @@ object UserInterface{
       ) ++
       footer.fold("")(_ ++ "\n")
 
-
-
-    //    def checkAndFormatPartialResults(resultList:List[Truth[W]]): String =
-//      resultList.headOption.fold("There are no possible truths")(
-//        head => {
-//          val introduction = s"There ${if(resultList.length == 1) "is" else "are"} ${resultList.length} possible truth${if(resultList.length == 1) "" else "s"}.\n"
-//          if (oneSolution){
-//             val mergedTruth = resultList.tail.foldLeft(head){case (tp1, tp2) => Truth.merge(tp1, tp2, world.customMerge)}.truthPieces.filter(_.state.isDefined)
-//             introduction ++ summarize(world, mergedTruth, resultList)
-//          }
-//          else {
-//            listTruthsWithIndexes(resultList).map(introduction ++ _.mkString("\n\n"))
-//          }
-//        }
-//      )
-
-//    private def summarize(world:World[W], summaryTruth:List[TruthPiece[State]], completeTruth:List[Truth[W]]):String = {
-//      if(summaryTruth.isEmpty && world.extraDeductions(completeTruth).isEmpty)
-//        "But as Socrates we claim just to know that we know nothing."
-//      else
-//        for {
-//          summarized <- world.printer.translateFullScript(summaryTruth)
-//          extraTruth <- Translator.traverse(world.extraDeductions(completeTruth))
-//        } yield "Summarizing, this is what we know for sure:\n" :: summarized ++ extraTruth.mkString(if(summaryTruth.isEmpty) "" else "\n","\n","")
-//    }
-//
-//    private def listTruthsWithIndexes(resultList:List[Truth[W]]):Translation[List[Truth[W]], List[String]] = {
-//            Translator.traverse(resultList.zipWithIndex.map {
-//              case (truth, index) =>
-//                  world.printer.translateFullScript(truth.truthPieces).map(s"Truth number ${index + 1}\n" ++_)
-//            }
-//    }
   }
 }

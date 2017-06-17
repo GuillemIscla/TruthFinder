@@ -11,13 +11,13 @@ trait Poker extends World[Poker] {
   val name: String = "Poker"
   val description:String = "This world shows you how it is living as a Race."
 
-  def possibleWorldStates(war:Option[WorldAspectReference[Poker, WorldState[Poker]]]):List[WorldState[Poker]] =
+  def possibleWorldStates(war:Option[WorldAspectReference[Poker, WorldState[Poker]]], conversation:List[Sentence] = List()):List[WorldState[Poker]] =
     war match {
       case _ =>
         List(Diamonds, Clubs, Hearts, Spades)
     }
 
-  def possibleWorldAspects(ws:Option[WorldState[Poker]]):List[WorldAspectReference[Poker, WorldState[Poker]]] =
+  def possibleWorldAspects(ws:Option[WorldState[Poker]], conversation:List[Sentence] = List()):List[WorldAspectReference[Poker, WorldState[Poker]]] =
     ws match {
       case _ =>
         List(SuitReference)
@@ -26,7 +26,7 @@ trait Poker extends World[Poker] {
   def checkConsistency(truth:Truth):Boolean =
     truth.count(_.state.contains(Joker)) <= 1
 
-  val races:List[Race] = List(Ace, King, Queen, Prince, Joker) ++ (2 until 10).map(v => Number(Some(v)))
+  def races(conversation:List[Sentence] = List()):List[Race] = List(Ace, King, Queen, Prince, Joker) ++ (2 until 10).map(v => Number(Some(v)))
 
   sealed trait Suit extends WorldState[Poker] {
     val unicodeSymbol:String
@@ -70,22 +70,22 @@ trait Poker extends World[Poker] {
         case sentenceRegex(speaker, _, _, raw_directObject) =>
           for {
             directObject <- parseDirectObject(raw_directObject)
-          } yield Sentence(Name(speaker), SuitReference, directObject, directObjectAffirmation = true)
+          } yield Sentence(Name(speaker), SuitReference, None, directObject, directObjectAffirmation = true)
         case _ =>
           NotTranslated(raw_script_sentence)
       }
     }
 
-    private def parseDirectObject(raw_directObject: String): Translation[String, WorldState[Poker]] = {
+    private def parseDirectObject(raw_directObject: String): Translation[String, DirectObject] = {
       raw_directObject match {
         case Diamonds.stringRef =>
-          Translated(Diamonds)
+          Translated(StateDirectObject(Diamonds))
         case Spades.stringRef =>
-          Translated(Spades)
+          Translated(StateDirectObject(Spades))
         case Hearts.stringRef =>
-          Translated(Hearts)
+          Translated(StateDirectObject(Hearts))
         case Clubs.stringRef =>
-          Translated(Clubs)
+          Translated(StateDirectObject(Clubs))
         case otherSuit =>
           TranslationError(otherSuit, s"$otherSuit is not a valid suit in Poker")
       }
@@ -122,7 +122,7 @@ trait Poker extends World[Poker] {
     val stringRef: String = "Ace"
     val description: String = "Aces are so cool! Always speak the truth, and if others speak about him, they speak the truth... Well, with one exception."
 
-    def personality(truth: Truth, text: List[Sentence], sentenceIndex: Int): Boolean => Boolean =
+    def canSay(truth: Truth, text: List[Sentence], sentenceIndex: Int): Boolean => Boolean =
       b => b
   }
 
@@ -131,7 +131,7 @@ trait Poker extends World[Poker] {
     val stringRef: String = "King"
     val description: String = "Along with Aces Kings are the only ones who can speak the truth about the Suit because they decide it ;) others simply don't know. Kings only speaks the truth about other Kings... And Aces of course! They lie when they speak about anyone else."
 
-    def personality(truth: Truth, text: List[Sentence], sentenceIndex: Int): Boolean => Boolean =
+    def canSay(truth: Truth, text: List[Sentence], sentenceIndex: Int): Boolean => Boolean =
       truth.find(tp => tp.reference == text(sentenceIndex).subject).map[Boolean => Boolean]{
         case Character(_, Some(Joker) | None) =>
           _ => true
@@ -148,7 +148,7 @@ trait Poker extends World[Poker] {
     val stringRef: String = "Queen"
     val description: String = "Queens only speaks the truth about Kings and other Queens... And Aces of course! They lie when they speak about anyone else."
 
-    def personality(truth: Truth, text: List[Sentence], sentenceIndex: Int): Boolean => Boolean =
+    def canSay(truth: Truth, text: List[Sentence], sentenceIndex: Int): Boolean => Boolean =
       truth.find(tp => tp.reference == text(sentenceIndex).subject).map[Boolean => Boolean]{
         case Character(_, Some(Joker) | None) =>
           _ => true
@@ -165,7 +165,7 @@ trait Poker extends World[Poker] {
     val stringRef: String = "Prince"
     val description: String = "Princes only speaks the truth about Kings, Queens and other Princes... And Aces of course! They lie when they speak about anyone else."
 
-    def personality(truth: Truth, text: List[Sentence], sentenceIndex: Int): Boolean => Boolean =
+    def canSay(truth: Truth, text: List[Sentence], sentenceIndex: Int): Boolean => Boolean =
       truth.find(tp => tp.reference == text(sentenceIndex).subject).map[Boolean => Boolean]{
         case Character(_, Some(Joker) | None) =>
           _ => true
@@ -182,7 +182,7 @@ trait Poker extends World[Poker] {
     val stringRef: String = "Number" + value.fold("")(i => s" $i")
     val description: String = "Humble numbers always speak the truth."
 
-    def personality(truth: Truth, text: List[Sentence], sentenceIndex: Int): Boolean => Boolean =
+    def canSay(truth: Truth, text: List[Sentence], sentenceIndex: Int): Boolean => Boolean =
       truth.find(tp => tp.reference == text(sentenceIndex).subject).map[Boolean => Boolean]{
         case Character(_, Some(Joker) | None) =>
           _ => true
@@ -197,7 +197,7 @@ trait Poker extends World[Poker] {
     val stringRef: String = "Joker"
     val description: String = "Joker is a total tricker! He disguises so if they speak about him, they speak the truth... is just he is cheating them! And himself is lying all the time, even about Aces or the Suit. Oh, but if talking about himself he speaks the truth. Luckily there is at most only one of them."
 
-    def personality(truth: Truth, text: List[Sentence], sentenceIndex: Int): Boolean => Boolean =
+    def canSay(truth: Truth, text: List[Sentence], sentenceIndex: Int): Boolean => Boolean =
       truth.find(tp => tp.reference == text(sentenceIndex).subject).map[Boolean => Boolean]{
         case Character(_, Some(Joker)) =>
           b => b

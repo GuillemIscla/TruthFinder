@@ -11,7 +11,7 @@ trait MagicForest extends World[MagicForest] {
   val name: String = "MagicForest"
   val description: String = "Playful creatures live in the forest and any human visitor may be tricked into its magic"
 
-  def possibleWorldStates(war: Option[WorldAspectReference[MagicForest, WorldState[MagicForest]]]): List[WorldState[MagicForest]] =
+  def possibleWorldStates(war: Option[WorldAspectReference[MagicForest, WorldState[MagicForest]]], conversation:List[Sentence] = List()): List[WorldState[MagicForest]] =
     war match {
       case Some(_: DayNightReference) =>
         List(Day, Night)
@@ -21,7 +21,7 @@ trait MagicForest extends World[MagicForest] {
         List(Day, Night, WhiteMagic, BlackMagic)
     }
 
-  def possibleWorldAspects(ws: Option[WorldState[MagicForest]]): List[WorldAspectReference[MagicForest, WorldState[MagicForest]]] =
+  def possibleWorldAspects(ws: Option[WorldState[MagicForest]], conversation:List[Sentence] = List()): List[WorldAspectReference[MagicForest, WorldState[MagicForest]]] =
     ws match {
       case Some(Day | Night) =>
         List(DayNightReference)
@@ -44,7 +44,7 @@ trait MagicForest extends World[MagicForest] {
         truth.collect { case ch: Character => ch.reference }.length)
 
 
-  val races: List[Race] = List(HumanVisitor, Wizard, Fairy, Goblin)
+  def races(conversation:List[Sentence] = List()): List[Race] = List(HumanVisitor, Wizard, Fairy, Goblin)
 
   override lazy val customParsers: List[LineParser[MagicForest]] = List(MagicForestParser)
 
@@ -59,18 +59,18 @@ trait MagicForest extends World[MagicForest] {
         case sentenceRegex(speaker, _, _, raw_directObject, _) =>
           for {
             directObject <- parseDirectObject(raw_directObject)
-          } yield Sentence(Name(speaker), MagicReference, directObject, directObjectAffirmation = true)
+          } yield Sentence(Name(speaker), MagicReference, None, directObject, directObjectAffirmation = true)
         case _ =>
           NotTranslated(raw_script_sentence)
       }
     }
 
-    private def parseDirectObject(raw_directObject: String): Translation[String, WorldState[MagicForest]] = {
+    private def parseDirectObject(raw_directObject: String): Translation[String, DirectObject] = {
       raw_directObject match {
         case WhiteMagic.stringRef =>
-          Translated(WhiteMagic)
+          Translated(StateDirectObject(WhiteMagic))
         case BlackMagic.stringRef =>
-          Translated(BlackMagic)
+          Translated(StateDirectObject(BlackMagic))
         case otherEnvironment =>
           TranslationError(otherEnvironment, s"$otherEnvironment is not a valid environment in the MagicForest")
       }
@@ -140,7 +140,7 @@ trait MagicForest extends World[MagicForest] {
     val stringRef: String = "HumanVisitor"
     val description: String = "They speak the truth during the day but they lie at night... unless there is a Wizard! Then their personality changes according to the magic used. The forest can accept some of them but at least there is someone who is not HumanVisitor."
 
-    def personality(truth: Truth, text: List[Sentence], sentenceIndex: Int): Boolean => Boolean = {
+    def canSay(truth: Truth, text: List[Sentence], sentenceIndex: Int): Boolean => Boolean = {
       val dayOrNight = findState(truth, DayNightReference)
       val whiteOrBlackMagic = findState(truth, MagicReference)
       val wizardDefined = findCharsOfRace(truth, Wizard).nonEmpty
@@ -167,14 +167,14 @@ trait MagicForest extends World[MagicForest] {
   case object Wizard extends Human {
     val stringRef:String = "Wizard"
     val description:String = "They are Humans after all, so speak the truth during the day but they lie at night. When they are around they use the Magic available to change HumanVisitors personality. They are already magic so magic environment does not affect them."
-    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def canSay(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       humanPersonality(findState(truth, DayNightReference))
   }
 
   case object Fairy extends Race {
     val stringRef:String = "Fairy"
     val description:String = "They grant you the gift of the truth the first time they speak. After that they are playful and they might speak the truth or not. They only show up when there is WhiteMagic."
-    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def canSay(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       if(text(sentenceIndex) == text.filter(_.speaker == text(sentenceIndex).speaker).head) //If this sentence is the first time they speak
         b => b
       else
@@ -184,7 +184,7 @@ trait MagicForest extends World[MagicForest] {
   case object Goblin extends Race {
     val stringRef:String = "Goblin"
     val description:String = "Last time they speak, they say a funny truth before vanishing. Any other time they are playful and they might speak the truth or not. They only show up when there is BlackMagic."
-    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def canSay(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       if(text(sentenceIndex) == text.filter(_.speaker == text(sentenceIndex).speaker).last) //If this sentence is the last time they speak
         b => b
       else

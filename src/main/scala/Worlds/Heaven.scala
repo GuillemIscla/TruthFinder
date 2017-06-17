@@ -12,19 +12,19 @@ trait Heaven extends World[Heaven] {
   val name: String = "Heaven"
   val description:String = "This world is perfect and everyone speaks the truth. There is one single God."
 
-  def possibleWorldStates(war:Option[WorldAspectReference[Heaven, WorldState[Heaven]]]):List[WorldState[Heaven]] =
+  def possibleWorldStates(war:Option[WorldAspectReference[Heaven, WorldState[Heaven]]], conversation:List[Sentence] = List()):List[WorldState[Heaven]] =
     war match {
       case _ =>
         List(Shiny)
     }
 
-  def possibleWorldAspects(ws:Option[WorldState[Heaven]]):List[WorldAspectReference[Heaven, WorldState[Heaven]]] =
+  def possibleWorldAspects(ws:Option[WorldState[Heaven]], conversation:List[Sentence] = List()):List[WorldAspectReference[Heaven, WorldState[Heaven]]] =
     ws match {
       case _ =>
         List(ShinyReference)
     }
 
-  val races:List[Race] = List(God, Angel, BlessedSoul)
+  def races(conversation:List[Sentence] = List()):List[Race] = List(God, Angel, BlessedSoul)
 
   def checkConsistency(truth: Truth):Boolean = {
     val charRaces = truth.collect {
@@ -43,7 +43,7 @@ trait Heaven extends World[Heaven] {
   }
 
   trait HeavenCitizen extends Race {
-    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def canSay(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       b => b //HeavenCitizen always speaks the truth
   }
 

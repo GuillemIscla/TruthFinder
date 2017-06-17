@@ -38,13 +38,13 @@ trait TranslatorTests extends FunSuite with Matchers{
           val maybeNot = raw_maybe_not != " not"
           (raw_ref_number, raw_world_state) match{
             case ("1", "worldStateRef1State1: A world state for tests") =>
-              Translated(Sentence(speaker, TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), maybeNot))
+              Translated(Sentence(speaker, TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), maybeNot))
             case ("1", "worldStateRef1State2: A world state for tests") =>
-              Translated(Sentence(speaker, TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State2"), maybeNot))
+              Translated(Sentence(speaker, TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State2")), maybeNot))
             case ("2", "worldStateRef2State1: A world state for tests") =>
-              Translated(Sentence(speaker, TestWorldStateRef("worldStateRef2"), TestWorldState("worldStateRef2State1"), maybeNot))
+              Translated(Sentence(speaker, TestWorldStateRef("worldStateRef2"), None, StateDirectObject(TestWorldState("worldStateRef2State1")), maybeNot))
             case ("2", "worldStateRef2State2: A world state for tests") =>
-              Translated(Sentence(speaker, TestWorldStateRef("worldStateRef2"), TestWorldState("worldStateRef2State2"), maybeNot))
+              Translated(Sentence(speaker, TestWorldStateRef("worldStateRef2"), None, StateDirectObject(TestWorldState("worldStateRef2State2")), maybeNot))
             case _ =>
               TranslationError(script, "TestParser thought it could translate it but it could not")
           }
@@ -93,15 +93,15 @@ class GeneralTranslatorTests extends TranslatorTests {
 class ParserTests extends TranslatorTests {
   test("TestParser should translate custom copulative verb sentence"){
 
-    TestParser.translate("A: It CustomCopulativeVerbRef1 worldStateRef1State1: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)))
-    TestParser.translate("A: It CustomCopulativeVerbRef1 worldStateRef1State2: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State2"), directObjectAffirmation = true)))
-    TestParser.translate("A: It CustomCopulativeVerbRef2 worldStateRef2State1: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef2"), TestWorldState("worldStateRef2State1"), directObjectAffirmation = true)))
-    TestParser.translate("A: It CustomCopulativeVerbRef2 worldStateRef2State2: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef2"), TestWorldState("worldStateRef2State2"), directObjectAffirmation = true)))
+    TestParser.translate("A: It CustomCopulativeVerbRef1 worldStateRef1State1: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)))
+    TestParser.translate("A: It CustomCopulativeVerbRef1 worldStateRef1State2: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State2")), directObjectAffirmation = true)))
+    TestParser.translate("A: It CustomCopulativeVerbRef2 worldStateRef2State1: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef2"), None, StateDirectObject(TestWorldState("worldStateRef2State1")), directObjectAffirmation = true)))
+    TestParser.translate("A: It CustomCopulativeVerbRef2 worldStateRef2State2: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef2"), None, StateDirectObject(TestWorldState("worldStateRef2State2")), directObjectAffirmation = true)))
 
-    TestParser.translate("A: It CustomCopulativeVerbRef1 not worldStateRef1State1: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = false)))
-    TestParser.translate("A: It CustomCopulativeVerbRef1 not worldStateRef1State2: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State2"), directObjectAffirmation = false)))
-    TestParser.translate("A: It CustomCopulativeVerbRef2 not worldStateRef2State1: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef2"), TestWorldState("worldStateRef2State1"), directObjectAffirmation = false)))
-    TestParser.translate("A: It CustomCopulativeVerbRef2 not worldStateRef2State2: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef2"), TestWorldState("worldStateRef2State2"), directObjectAffirmation = false)))
+    TestParser.translate("A: It CustomCopulativeVerbRef1 not worldStateRef1State1: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = false)))
+    TestParser.translate("A: It CustomCopulativeVerbRef1 not worldStateRef1State2: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State2")), directObjectAffirmation = false)))
+    TestParser.translate("A: It CustomCopulativeVerbRef2 not worldStateRef2State1: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef2"), None, StateDirectObject(TestWorldState("worldStateRef2State1")), directObjectAffirmation = false)))
+    TestParser.translate("A: It CustomCopulativeVerbRef2 not worldStateRef2State2: A world state for tests") should be (Translated(Sentence(Name("A"), TestWorldStateRef("worldStateRef2"), None, StateDirectObject(TestWorldState("worldStateRef2State2")), directObjectAffirmation = false)))
   }
 
   test("TestParser should go to error on wrong custom copulative verb sentence"){
@@ -126,9 +126,9 @@ class ParserTests extends TranslatorTests {
 class CommonParserTests extends TranslatorTests {
   test("GenericParser should translate I am sentences"){
     val sentenceScript1 = "A: I am Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), Name("A"), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), Name("A"), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: I am not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), Name("A"), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), Name("A"), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
 
     GenericParser(TestWorld.worldInstance).translate(sentenceScript1) should be (Translated(translatedSentence1))
     GenericParser(TestWorld.worldInstance).translate(sentenceScript2) should be (Translated(translatedSentence2))
@@ -136,9 +136,9 @@ class CommonParserTests extends TranslatorTests {
 
   test("GenericParser should translate other char is sentences"){
     val sentenceScript1 = "A: B is Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), Name("B"), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), Name("B"), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: B is not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), Name("B"), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), Name("B"), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
 
     GenericParser(TestWorld.worldInstance).translate(sentenceScript1) should be (Translated(translatedSentence1))
     GenericParser(TestWorld.worldInstance).translate(sentenceScript2) should be (Translated(translatedSentence2))
@@ -146,9 +146,9 @@ class CommonParserTests extends TranslatorTests {
 
   test("GenericParser should translate Someone is sentences"){
     val sentenceScript1 = "A: Someone is Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: Someone is not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
 
     GenericParser(TestWorld.worldInstance).translate(sentenceScript1) should be (Translated(translatedSentence1))
     GenericParser(TestWorld.worldInstance).translate(sentenceScript2) should be (Translated(translatedSentence2))
@@ -156,9 +156,9 @@ class CommonParserTests extends TranslatorTests {
 
   test("GenericParser should translate Everyone is sentences"){
     val sentenceScript1 = "A: Everyone is Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), Everyone, TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), Everyone, None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: Everyone is not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), Everyone, TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), Everyone, None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
 
     GenericParser(TestWorld.worldInstance).translate(sentenceScript1) should be (Translated(translatedSentence1))
     GenericParser(TestWorld.worldInstance).translate(sentenceScript2) should be (Translated(translatedSentence2))
@@ -166,9 +166,9 @@ class CommonParserTests extends TranslatorTests {
 
   test("GenericParser should translate No one is sentences"){
     val sentenceScript1 = "A: No one is Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(0, Exactly), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(0, Exactly), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: No one is not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(0, Exactly), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(0, Exactly), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
 
     GenericParser(TestWorld.worldInstance).translate(sentenceScript1) should be (Translated(translatedSentence1))
     GenericParser(TestWorld.worldInstance).translate(sentenceScript2) should be (Translated(translatedSentence2))
@@ -176,13 +176,13 @@ class CommonParserTests extends TranslatorTests {
 
   test("GenericParser should translate There (is|are) at least sentences"){
     val sentenceScript1 = "A: There is at least 1 Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: There is at least 1 not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
     val sentenceScript3 = "A: There are at least 2 Race1: TestRace"
-    val translatedSentence3 = Sentence(Name("A"), NumberOfPeople(2, MoreOrEqual), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence3 = Sentence(Name("A"), NumberOfPeople(2, MoreOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript4 = "A: There are at least 2 not Race1: TestRace"
-    val translatedSentence4 = Sentence(Name("A"), NumberOfPeople(2, MoreOrEqual), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence4 = Sentence(Name("A"), NumberOfPeople(2, MoreOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
 
     GenericParser(TestWorld.worldInstance).translate(sentenceScript1) should be (Translated(translatedSentence1))
     GenericParser(TestWorld.worldInstance).translate(sentenceScript2) should be (Translated(translatedSentence2))
@@ -192,13 +192,13 @@ class CommonParserTests extends TranslatorTests {
 
   test("GenericParser should translate There (is|are) at most sentences"){
     val sentenceScript1 = "A: There is at most 1 Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, LessOrEqual), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, LessOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: There is at most 1 not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, LessOrEqual), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, LessOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
     val sentenceScript3 = "A: There are at most 2 Race1: TestRace"
-    val translatedSentence3 = Sentence(Name("A"), NumberOfPeople(2, LessOrEqual), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence3 = Sentence(Name("A"), NumberOfPeople(2, LessOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript4 = "A: There are at most 2 not Race1: TestRace"
-    val translatedSentence4 = Sentence(Name("A"), NumberOfPeople(2, LessOrEqual), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence4 = Sentence(Name("A"), NumberOfPeople(2, LessOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
 
     GenericParser(TestWorld.worldInstance).translate(sentenceScript1) should be (Translated(translatedSentence1))
     GenericParser(TestWorld.worldInstance).translate(sentenceScript2) should be (Translated(translatedSentence2))
@@ -208,13 +208,13 @@ class CommonParserTests extends TranslatorTests {
 
   test("GenericParser should translate There (is|are) exactly sentences"){
     val sentenceScript1 = "A: There is exactly 1 Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, Exactly), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, Exactly), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: There is exactly 1 not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, Exactly), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, Exactly), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
     val sentenceScript3 = "A: There are exactly 2 Race1: TestRace"
-    val translatedSentence3 = Sentence(Name("A"), NumberOfPeople(2, Exactly), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence3 = Sentence(Name("A"), NumberOfPeople(2, Exactly), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript4 = "A: There are exactly 2 not Race1: TestRace"
-    val translatedSentence4 = Sentence(Name("A"), NumberOfPeople(2, Exactly), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence4 = Sentence(Name("A"), NumberOfPeople(2, Exactly), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
 
     GenericParser(TestWorld.worldInstance).translate(sentenceScript1) should be (Translated(translatedSentence1))
     GenericParser(TestWorld.worldInstance).translate(sentenceScript2) should be (Translated(translatedSentence2))
@@ -224,9 +224,9 @@ class CommonParserTests extends TranslatorTests {
 
   test("RegularWorldStateParser should translate is sentences"){
     val sentenceScript1 = "A: It is worldStateRef1State1: A world state for tests"
-    val translatedSentence1 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: It is not worldStateRef1State1: A world state for tests"
-    val translatedSentence2 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = false)
 
     RegularWorldStateParser(TestWorld.worldInstance).translate(sentenceScript1) should be (Translated(translatedSentence1))
     RegularWorldStateParser(TestWorld.worldInstance).translate(sentenceScript2) should be (Translated(translatedSentence2))
@@ -238,9 +238,9 @@ class TextParserTest extends TranslatorTests {
 
   test("TextParserTest should translate I am sentences"){
     val sentenceScript1 = "A: I am Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), Name("A"), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), Name("A"), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: I am not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), Name("A"), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), Name("A"), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
     val socratesTruth = List(
       WorldAspect(TestWorldStateRef("worldStateRef1"), None),
       WorldAspect(TestWorldStateRef("worldStateRef2"), None),
@@ -253,9 +253,9 @@ class TextParserTest extends TranslatorTests {
 
   test("TextParserTest should translate other char is sentences"){
     val sentenceScript1 = "A: B is Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), Name("B"), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), Name("B"), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: B is not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), Name("B"), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), Name("B"), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
     val socratesTruth = List(
       WorldAspect(TestWorldStateRef("worldStateRef1"), None),
       WorldAspect(TestWorldStateRef("worldStateRef2"), None),
@@ -269,9 +269,9 @@ class TextParserTest extends TranslatorTests {
 
   test("TextParserTest should translate Someone is sentences"){
     val sentenceScript1 = "A: Someone is Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: Someone is not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
     val socratesTruth = List(
       WorldAspect(TestWorldStateRef("worldStateRef1"), None),
       WorldAspect(TestWorldStateRef("worldStateRef2"), None),
@@ -284,9 +284,9 @@ class TextParserTest extends TranslatorTests {
 
   test("TextParserTest should translate Everyone is sentences"){
     val sentenceScript1 = "A: Everyone is Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), Everyone, TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), Everyone, None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: Everyone is not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), Everyone, TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), Everyone, None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
     val socratesTruth = List(
       WorldAspect(TestWorldStateRef("worldStateRef1"), None),
       WorldAspect(TestWorldStateRef("worldStateRef2"), None),
@@ -299,9 +299,9 @@ class TextParserTest extends TranslatorTests {
 
   test("TextParserTest should translate No one is is sentences"){
     val sentenceScript1 = "A: No one is Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(0, Exactly), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(0, Exactly), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: No one is not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(0, Exactly), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(0, Exactly), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
     val socratesTruth = List(
       WorldAspect(TestWorldStateRef("worldStateRef1"), None),
       WorldAspect(TestWorldStateRef("worldStateRef2"), None),
@@ -314,13 +314,13 @@ class TextParserTest extends TranslatorTests {
 
   test("TextParserTest should translate There (is|are) at least sentences"){
     val sentenceScript1 = "A: There is at least 1 Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: There is at least 1 not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
     val sentenceScript3 = "A: There are at least 2 Race1: TestRace"
-    val translatedSentence3 = Sentence(Name("A"), NumberOfPeople(2, MoreOrEqual), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence3 = Sentence(Name("A"), NumberOfPeople(2, MoreOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript4 = "A: There are at least 2 not Race1: TestRace"
-    val translatedSentence4 = Sentence(Name("A"), NumberOfPeople(2, MoreOrEqual), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence4 = Sentence(Name("A"), NumberOfPeople(2, MoreOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
     val socratesTruth = List(
       WorldAspect(TestWorldStateRef("worldStateRef1"), None),
       WorldAspect(TestWorldStateRef("worldStateRef2"), None),
@@ -335,13 +335,13 @@ class TextParserTest extends TranslatorTests {
 
   test("TextParserTest should translate There (is|are) at most sentences"){
     val sentenceScript1 = "A: There is at most 1 Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, LessOrEqual), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, LessOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: There is at most 1 not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, LessOrEqual), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, LessOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
     val sentenceScript3 = "A: There are at most 2 Race1: TestRace"
-    val translatedSentence3 = Sentence(Name("A"), NumberOfPeople(2, LessOrEqual), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence3 = Sentence(Name("A"), NumberOfPeople(2, LessOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript4 = "A: There are at most 2 not Race1: TestRace"
-    val translatedSentence4 = Sentence(Name("A"), NumberOfPeople(2, LessOrEqual), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence4 = Sentence(Name("A"), NumberOfPeople(2, LessOrEqual), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
     val socratesTruth = List(
       WorldAspect(TestWorldStateRef("worldStateRef1"), None),
       WorldAspect(TestWorldStateRef("worldStateRef2"), None),
@@ -357,13 +357,13 @@ class TextParserTest extends TranslatorTests {
 
   test("TextParserTest should translate There (is|are) exactly sentences"){
     val sentenceScript1 = "A: There is exactly 1 Race1: TestRace"
-    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, Exactly), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), NumberOfPeople(1, Exactly), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: There is exactly 1 not Race1: TestRace"
-    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, Exactly), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), NumberOfPeople(1, Exactly), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
     val sentenceScript3 = "A: There are exactly 2 Race1: TestRace"
-    val translatedSentence3 = Sentence(Name("A"), NumberOfPeople(2, Exactly), TestRace("Race1"), directObjectAffirmation = true)
+    val translatedSentence3 = Sentence(Name("A"), NumberOfPeople(2, Exactly), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = true)
     val sentenceScript4 = "A: There are exactly 2 not Race1: TestRace"
-    val translatedSentence4 = Sentence(Name("A"), NumberOfPeople(2, Exactly), TestRace("Race1"), directObjectAffirmation = false)
+    val translatedSentence4 = Sentence(Name("A"), NumberOfPeople(2, Exactly), None, StateDirectObject(TestRace("Race1")), directObjectAffirmation = false)
     val socratesTruth = List(
       WorldAspect(TestWorldStateRef("worldStateRef1"), None),
       WorldAspect(TestWorldStateRef("worldStateRef2"), None),
@@ -379,9 +379,9 @@ class TextParserTest extends TranslatorTests {
 
   test("TextParserTest should translate is (WorldState) sentences"){
     val sentenceScript1 = "A: It is worldStateRef1State1: A world state for tests"
-    val translatedSentence1 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: It is not worldStateRef1State1: A world state for tests"
-    val translatedSentence2 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = false)
+    val translatedSentence2 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = false)
     val socratesTruth = List(
       WorldAspect(TestWorldStateRef("worldStateRef1"), None),
       WorldAspect(TestWorldStateRef("worldStateRef2"), None),
@@ -394,11 +394,11 @@ class TextParserTest extends TranslatorTests {
 
   test("TextParserTest should translate custom copulative verb sentences"){
     val sentenceScript1 = "A: It CustomCopulativeVerbRef1 worldStateRef1State1: A world state for tests"
-    val translatedSentence1 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: It CustomCopulativeVerbRef2 worldStateRef2State1: A world state for tests"
-    val translatedSentence2 = Sentence(Name("A"), TestWorldStateRef("worldStateRef2"), TestWorldState("worldStateRef2State1"), directObjectAffirmation = true)
+    val translatedSentence2 = Sentence(Name("A"), TestWorldStateRef("worldStateRef2"), None, StateDirectObject(TestWorldState("worldStateRef2State1")), directObjectAffirmation = true)
     val sentenceScript3 = "A: It is worldStateRef1State1: A world state for tests"
-    val translatedSentence3 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val translatedSentence3 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
 
     val socratesTruth = List(
       WorldAspect(TestWorldStateRef("worldStateRef1"), None),
@@ -414,16 +414,16 @@ class TextParserTest extends TranslatorTests {
   test("TextParserTest should go to error if has not translated sentences"){
     val sentence = "A: This sentence will be not translated"
 
-    textParser.translate(List(sentence)) should be (TranslationError(sentence, "Was not understood by the parsers"))
+    textParser.translate(List(sentence)) should be (TranslationError(sentence, "Was not understood by the translators"))
   }
 
   test("TextParserTest should go to error on wrong custom names"){
     val sentenceScript1 = "A: It CustomCopulativeVerbRef1 worldStateRef1State1: A world state for tests"
-    val translatedSentence1 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val translatedSentence1 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val sentenceScript2 = "A: It CustomCopulativeVerbRef2 worldStateRef2State1: A world state for tests"
-    val translatedSentence2 = Sentence(Name("A"), TestWorldStateRef("worldStateRef2"), TestWorldState("worldStateRef2State1"), directObjectAffirmation = true)
+    val translatedSentence2 = Sentence(Name("A"), TestWorldStateRef("worldStateRef2"), None, StateDirectObject(TestWorldState("worldStateRef2State1")), directObjectAffirmation = true)
     val sentenceScript3 = "A: It is worldStateRef1State1: A world state for tests"
-    val translatedSentence3 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val translatedSentence3 = Sentence(Name("A"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
 
     val socratesTruth = List(
       WorldAspect(TestWorldStateRef("worldStateRef1"), None),

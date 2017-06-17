@@ -12,7 +12,7 @@ object Truth {
     }
 
   def compareTextAndTruth(world:World[_], truth: Truth, text: List[Sentence]):List[Truth]=
-    nextAssumptions(world, truth) match {
+    nextAssumptions(world, truth, text) match {
       case Nil => //If there are no assumptions to make we know everything
         List(truth)
       case assumptions =>
@@ -22,11 +22,11 @@ object Truth {
           .flatMap(compareTextAndTruth(world, _, text))
     }
 
-  def nextAssumptions(world:World[_], truth: Truth): List[Truth] =
+  def nextAssumptions(world:World[_], truth: Truth, text: List[Sentence]): List[Truth] =
     truth.find(_.state.isEmpty).fold(List.empty[Truth])(
       undefTp => {
         val index = truth.indexOf(undefTp)
-        world.possibleTruthPieces(undefTp.reference).map {
+        world.possibleTruthPieces(undefTp.reference, text).map {
           newAssumption =>
             truth.patch(index, Seq(newAssumption), 1)
         }
@@ -34,17 +34,17 @@ object Truth {
     )
 
   def sentenceCanBeSpoken[S <: State](world:World[_], truth: Truth, text:List[Sentence], sentenceIndex: Int): Boolean = {
-    val personality: Boolean => Boolean = //Function that the given character is going to use to talk sentences to us
+    val canRaceSay: Boolean => Boolean = //Function that the given character is going to use to talk sentences to us
       (for {
         truthPiece <- truth.find(_.reference == text(sentenceIndex).speaker)
-        personality <- truthPiece.state collect { case race:Race => race.personality(truth, text, sentenceIndex)}
-      } yield personality)
+        canRaceSay <- truthPiece.state collect { case race:Race => race.canSay(truth, text, sentenceIndex)}
+      } yield canRaceSay)
         .getOrElse(_ => true)
     //In case where we don't know the race of the character, anything
     //he says is sensible to us regardless of it is the truth or not
 
     text(sentenceIndex).compareWithTruth(truth)
-      .fold(true)(personality)
+      .fold(true)(canRaceSay)
     //If we don't know the boolean value of the sentence, whatever the character says offers no contradiction
     //If we know if the boolean value of the sentence, we check with the personality function if the character offer a contradiction
   }

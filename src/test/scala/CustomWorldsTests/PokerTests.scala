@@ -1,6 +1,6 @@
 package CustomWorldsTests
 
-import TruthEngine.Language.{Character, Name, Sentence, WorldAspect}
+import TruthEngine.Language._
 import TruthEngine.{Translated, TranslationError}
 import Worlds.Poker
 import Worlds.Poker._
@@ -14,7 +14,7 @@ class PokerTests extends CustomWorldTests[Poker]{
 
   test("Custom parsing in Poker"){
     PokerParser.translate("A: The suit is Swords") should be (TranslationError("Swords", "Swords is not a valid suit in Poker"))
-    PokerParser.translate("A: The suit is Diamonds") should be (Translated(Sentence(Name("A"),SuitReference,Diamonds, directObjectAffirmation = true)))
+    PokerParser.translate("A: The suit is Diamonds") should be (Translated(Sentence(Name("A"),SuitReference, None, StateDirectObject(Diamonds), directObjectAffirmation = true)))
   }
 
   test("Custom print in Poker"){

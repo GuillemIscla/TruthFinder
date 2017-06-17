@@ -23,9 +23,9 @@ case class TextParser[W <:World[W]](world:W, translatorCollection:List[LineParse
   val scriptTag:ClassTag[String] = implicitly[ClassTag[String]]
 
   def generalCheck(listTranslated:List[Sentence]):Translation[List[Sentence], List[Sentence]] = {
-    listCharacters(listTranslated).find(ch => forbiddenNames.contains(ch.charName.trim.toLowerCase)) match {
+    listCharacters(listTranslated).find(ch => forbiddenNames.contains(ch.stringRef.trim.toLowerCase)) match {
       case Some(invalidCharacter) =>
-        TranslationError.invalidCharacterError(invalidCharacter.charName)
+        TranslationError.invalidCharacterError(invalidCharacter.stringRef)
       case None =>
         Translated(listTranslated)
     }
@@ -33,14 +33,14 @@ case class TextParser[W <:World[W]](world:W, translatorCollection:List[LineParse
 
   def formatResult(listTranslated:List[Sentence]):(Truth, List[Sentence]) = {
     val socratesTruth:Truth =
-      world.possibleWorldAspects().map(WorldAspect(_, None)) ++
+      world.possibleWorldAspects(None, listTranslated).map(WorldAspect(_, None)) ++
         listCharacters(listTranslated).map(Character(_, None))
     (socratesTruth, listTranslated)
   }
 
   private def listCharacters(listTranslated:List[Sentence]): List[Name] =
     (listTranslated.map(_.speaker) ++ listTranslated.map(_.subject) ++ listTranslated.map(_.directObject))
-      .collect { case name: Name => name }.distinct.sortBy(_.charName)
+      .collect { case name: Name => name }.distinct.sortBy(_.stringRef)
 
 }
 
@@ -56,9 +56,9 @@ object ParserHelper {//With the parsers here the non-copulative verbs are parsed
           (for{
             _ <- NotTranslated[String, Sentence](script)
             subject <- parseSubject(speaker, raw_subject_verb).newTranslation[Sentence]
-            directObject <- parseDirectObject(script, raw_directObject, world.races).newTranslation[Sentence]
+            directObject <- parseDirectObject(raw_directObject, world.races()).newTranslation[Sentence]
             directObjectAffirmation <- parseDirectObjectAffirmation(maybeNot)
-          } yield Sentence(Name(speaker), subject, directObject, directObjectAffirmation)).translateFrom[String]
+          } yield Sentence(Name(speaker), subject, None, directObject, directObjectAffirmation)).translateFrom[String]
         case _ =>
           NotTranslated(script)
       }
@@ -88,13 +88,13 @@ object ParserHelper {//With the parsers here the non-copulative verbs are parsed
         case nameRegex(name, _) =>
           Translated(Name(name))
         case _ =>
-          TranslationError(raw_subject_verb, "thought it could translate this subject + verb but failed")
+          TranslationError(raw_subject_verb, "GenericParser thought it could translate this subject + verb but failed")
       }
     }
 
-    private def parseDirectObject(raw_sentence:String, raw_directObject:String, possibleRaces:List[Race]):Translation[String, Race] =
-      possibleRaces.map(r => r.stringRef -> r).toMap.get(raw_directObject).fold[Translation[String, Race]](
-        TranslationError(raw_directObject, "thought it could translate this direct object but failed")
+    private def parseDirectObject(raw_directObject:String, possibleRaces:List[Race]):Translation[String, DirectObject] =
+      possibleRaces.map(r => r.stringRef -> r).toMap.get(raw_directObject).map(StateDirectObject.apply).fold[Translation[String, DirectObject]](
+        TranslationError(raw_directObject, "GenericParser thought it could translate this direct object but failed")
       )(Translated.apply)
 
     private def parseDirectObjectAffirmation(maybeNot:String):Translation[String, Boolean] =
@@ -114,7 +114,7 @@ object ParserHelper {//With the parsers here the non-copulative verbs are parsed
             subject <- parseSubject(raw_directObject, world.possibleWorldStates(None)).newTranslation[Sentence]
             directObject <- parseDirectObject(raw_directObject, world.possibleWorldStates(None)).newTranslation[Sentence]
             directObjectAffirmation <- parseDirectObjectAffirmation(maybeNot)
-          } yield Sentence(Name(speaker), subject, directObject, directObjectAffirmation)
+          } yield Sentence(Name(speaker), subject, None, directObject, directObjectAffirmation)
         case _ =>
           NotTranslated(script)
       }
@@ -133,14 +133,14 @@ object ParserHelper {//With the parsers here the non-copulative verbs are parsed
       }
     }
 
-    private def parseDirectObject(raw_directObject:String, possibleWorldStates:List[WorldState[W]]): Translation[String, WorldState[W]] = {
+    private def parseDirectObject(raw_directObject:String, possibleWorldStates:List[WorldState[W]]): Translation[String, StateDirectObject] = {
       val statesMap = possibleWorldStates.map(r => r.stringRef -> r).toMap
-      statesMap.get(raw_directObject).fold[Translation[String, WorldState[W]]](TranslationError(raw_directObject, s"$raw_directObject is an invalid direct object")){
+      statesMap.get(raw_directObject).fold[Translation[String, StateDirectObject]](TranslationError(raw_directObject, s"$raw_directObject is an invalid direct object")){
         case wst: WorldState[W]@unchecked =>
           world.possibleWorldAspects(Some(wst)).headOption
-            .fold[Translation[String, WorldState[W]]](
+            .fold[Translation[String, StateDirectObject]](
             TranslationError(s"Creator of the world: $world speech", s"the possibleWorldAspects function of the world: $world is badly defined")
-          )(_ => Translated(wst))
+          )(_ => Translated(StateDirectObject(wst)))
         case _ =>
           TranslationError(raw_directObject, "this direct object references to a wrong world state")
       }

@@ -12,13 +12,13 @@ trait SinnerOrSaint extends World[SinnerOrSaint] {
   val name: String = "SinnerOrSaint"
   val description:String = "In this world there are always Angels or Devils (but never at the same time) and they compete for human souls."
 
-  def possibleWorldStates(war:Option[WorldAspectReference[SinnerOrSaint, WorldState[SinnerOrSaint]]]):List[WorldState[SinnerOrSaint]] =
+  def possibleWorldStates(war:Option[WorldAspectReference[SinnerOrSaint, WorldState[SinnerOrSaint]]], conversation:List[Sentence] = List()):List[WorldState[SinnerOrSaint]] =
     war match {
       case _ =>
         List(AngelPresence, DaemonPresence)
     }
 
-  def possibleWorldAspects(ws:Option[WorldState[SinnerOrSaint]]):List[WorldAspectReference[SinnerOrSaint, WorldState[SinnerOrSaint]]] =
+  def possibleWorldAspects(ws:Option[WorldState[SinnerOrSaint]], conversation:List[Sentence] = List()):List[WorldAspectReference[SinnerOrSaint, WorldState[SinnerOrSaint]]] =
     ws match {
       case _ =>
         List(SuperNaturalPresenceReference)
@@ -34,7 +34,7 @@ trait SinnerOrSaint extends World[SinnerOrSaint] {
         true
     }
 
-  val races:List[Race] = List(Angel, Daemon, Human(Some(Saint)), Human(Some(Undecided)), Human(Some(Sinner)))
+  def races(text:List[Sentence] = List()):List[Race] = List(Angel, Daemon, Human(Some(Saint)), Human(Some(Undecided)), Human(Some(Sinner)))
 
   override lazy val customParsers:List[LineParser[SinnerOrSaint]] = List(SinnerOrSaintParser)
   case object SinnerOrSaintParser extends LineParser[SinnerOrSaint] {
@@ -48,18 +48,18 @@ trait SinnerOrSaint extends World[SinnerOrSaint] {
         case sentenceRegex(speaker, _, _, raw_directObject) =>
           for {
             directObject <- parseDirectObject(raw_directObject)
-          } yield Sentence(Name(speaker), SuperNaturalPresenceReference, directObject, directObjectAffirmation = true)
+          } yield Sentence(Name(speaker), SuperNaturalPresenceReference, None, directObject, directObjectAffirmation = true)
         case _ =>
           NotTranslated(raw_script_sentence)
       }
     }
 
-    private def parseDirectObject(raw_directObject:String):Translation[String, WorldState[SinnerOrSaint]] = {
+    private def parseDirectObject(raw_directObject:String):Translation[String, DirectObject] = {
       raw_directObject match {
         case AngelPresence.stringRef =>
-          Translated(AngelPresence)
+          Translated(StateDirectObject(AngelPresence))
         case DaemonPresence.stringRef =>
-          Translated(DaemonPresence)
+          Translated(StateDirectObject(DaemonPresence))
         case otherPresence =>
           TranslationError(otherPresence, s"$otherPresence is not a valid presence in the SinnerOrSaint world")
       }
@@ -121,7 +121,7 @@ trait SinnerOrSaint extends World[SinnerOrSaint] {
     val stringRef:String = "Human"
     val description:String = "Humans can be either Saints who always tell the truth, Sinners that always lie when there is a daemon around and Undecided which only lie if they speak after a daemon"
 
-    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def canSay(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       (status, findState(truth, SuperNaturalPresenceReference).map(_ == AngelPresence), spokenAfterDaemon(truth, text, sentenceIndex)) match {
         case (Some(Saint), _, _) =>
           b => b
@@ -151,7 +151,7 @@ trait SinnerOrSaint extends World[SinnerOrSaint] {
     val stringRef:String = "Angel"
     val description: String = "They fill the environment with their presence and make everyone speak the truth."
 
-    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def canSay(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       b => b
   }
 
@@ -159,7 +159,7 @@ trait SinnerOrSaint extends World[SinnerOrSaint] {
     val stringRef:String = "Daemon"
     val description:String = "They fill the environment with their presence and force people to lie."
 
-    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def canSay(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       b => !b
   }
 

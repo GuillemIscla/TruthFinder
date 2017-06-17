@@ -9,8 +9,8 @@ import scala.reflect.ClassTag
 
 object App {
   def main(args: Array[String]): Unit = {
-    val world = SinnerOrSaint
-    val conversationNumber = 4
+    val world = GayClub
+    val conversationNumber = 2
     val oneSolution:Boolean = false
 
     val fileName = s"src\\main\\resources\\${world.name}\\Conversation$conversationNumber.txt"
@@ -36,7 +36,7 @@ object UserInterface{
     s"Welcome to ${world.name} :D" + "\n" +
       world.description + "\n\n" +
       world.possibleWorldStates(None).map(ws => s"${ws.stringRef}: ${ws.description}").mkString("These are the world states:\n","\n","\n\n") +
-      world.races.map(ws => s"${ws.stringRef}: ${ws.description}").mkString("These are the races in the world:\n","\n","\n\n")
+      world.races().map(ws => s"${ws.stringRef}: ${ws.description}").mkString("These are the races in the world:\n","\n","\n\n")
 
   def printTruth[W <:World[W]](world:World[W], translatedListTruth:Translation[List[String], List[Truth]], oneSolution:Boolean):String = {
     translatedListTruth

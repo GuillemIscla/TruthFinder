@@ -4,32 +4,32 @@ import scala.reflect.ClassTag
 
 sealed trait Translation[Script, Result]{
   def map[B](f:Result=>B):Translation[Script, B]
-  def flatMap[B](f:Script=>Translation[B, Result])(implicit tag: ClassTag[Script]):Translation[Script, Result]
-  def newTranslation[NewResult]:Translation[Result, NewResult]
+  def flatMap[B](f:Script=>Translation[B, Result]):Translation[Script, Result]
+  def newTranslation[NewResult](implicit tag: ClassTag[Result]):Translation[Result, NewResult]
   def translateFrom[NewScript](implicit tag: ClassTag[NewScript]):Translation[NewScript, Result]
   def translateTo[NewResult](implicit tag: ClassTag[NewResult]):Translation[Script, NewResult]
-  def scriptMap[NewScript](f:Script=>NewScript):Translation[NewScript, Result]
+  def scriptMap[NewScript](f:Script=>NewScript)(implicit tag: ClassTag[NewScript]):Translation[NewScript, Result]
 }
 
-case class Translated[Script, Result](result:Result) extends Translation[Script, Result] {
+case class Translated[Script, Result](result:Result)(implicit scriptTag: ClassTag[Script]) extends Translation[Script, Result] {
   def map[B](f: Result => B): Translation[Script, B] = Translated(f(result))
-  def flatMap[B](f:Script=>Translation[B, Result])(implicit tag: ClassTag[Script]):Translation[Script, Result] = Translated(result)
-  def newTranslation[NewResult]:Translation[Result, NewResult] = NotTranslated(result)
+  def flatMap[B](f:Script=>Translation[B, Result]):Translation[Script, Result] = Translated(result)
+  def newTranslation[NewResult](implicit tag: ClassTag[Result]):Translation[Result, NewResult] = NotTranslated(result)
   def translateFrom[NewScript](implicit tag: ClassTag[NewScript]):Translation[NewScript, Result] = Translated(result)
   def translateTo[NewResult](implicit tag: ClassTag[NewResult]):Translation[Script, NewResult] =
     result match {
       case thisResult:NewResult =>
-        Translated(thisResult)
+        Translated[Script, NewResult](thisResult)(scriptTag)
       case _ =>
         TranslationError(result.toString, TranslationError.changeTranslatatedDestination)
     }
-  def scriptMap[NewScript](f:Script=>NewScript):Translation[NewScript, Result] = Translated(result)
+  def scriptMap[NewScript](f:Script=>NewScript)(implicit tag: ClassTag[NewScript]):Translation[NewScript, Result] = Translated[NewScript, Result](result)
 }
 
-case class NotTranslated[Script, Result](script:Script) extends Translation[Script, Result] {
+case class NotTranslated[Script, Result](script:Script)(implicit scriptTag: ClassTag[Script]) extends Translation[Script, Result] {
   def map[B](f: Result => B): Translation[Script, B] = NotTranslated(script)
-  def flatMap[B](f:Script=>Translation[B, Result])(implicit tag: ClassTag[Script]):Translation[Script, Result] = f(script).translateFrom[Script]
-  def newTranslation[NewResult]:Translation[Result, NewResult] = TranslationError(script.toString, TranslationError.notPreviouslytranslated)
+  def flatMap[B](f:Script=>Translation[B, Result]):Translation[Script, Result] = f(script).translateFrom[Script]
+  def newTranslation[NewResult](implicit tag: ClassTag[Result]):Translation[Result, NewResult] = TranslationError(script.toString, TranslationError.notPreviouslytranslated)
   def translateFrom[NewScript](implicit tag: ClassTag[NewScript]):Translation[NewScript, Result] =
     script match {
       case thisScript:NewScript =>
@@ -38,17 +38,17 @@ case class NotTranslated[Script, Result](script:Script) extends Translation[Scri
         TranslationError(script.toString, TranslationError.changeNotTranslatedOrigin)
     }
 
-  def translateTo[NewResult](implicit tag: ClassTag[NewResult]):Translation[Script, NewResult] = NotTranslated(script)
-  def scriptMap[NewScript](f:Script=>NewScript):Translation[NewScript, Result] = NotTranslated(f(script))
+  def translateTo[NewResult](implicit tag: ClassTag[NewResult]):Translation[Script, NewResult] = NotTranslated[Script, NewResult](script)(scriptTag)
+  def scriptMap[NewScript](f:Script=>NewScript)(implicit tag: ClassTag[NewScript]):Translation[NewScript, Result] = NotTranslated(f(script))
 }
 
 case class TranslationError[Script, Result](bad_script_string:String, error:String) extends Translation[Script, Result] {
   def map[B](f: Result => B): Translation[Script, B] = TranslationError(bad_script_string, error)
-  def flatMap[B](f:Script=>Translation[B, Result])(implicit tag: ClassTag[Script]):Translation[Script, Result] = TranslationError(bad_script_string, error)
-  def newTranslation[NewResult]:Translation[Result, NewResult] = TranslationError(bad_script_string, error)
+  def flatMap[B](f:Script=>Translation[B, Result]):Translation[Script, Result] = TranslationError(bad_script_string, error)
+  def newTranslation[NewResult](implicit tag: ClassTag[Result]):Translation[Result, NewResult] = TranslationError(bad_script_string, error)
   def translateFrom[NewScript](implicit tag: ClassTag[NewScript]):Translation[NewScript, Result] = TranslationError(bad_script_string, error)
   def translateTo[NewResult](implicit tag: ClassTag[NewResult]):Translation[Script, NewResult] = TranslationError(bad_script_string, error)
-  def scriptMap[NewScript](f:Script=>NewScript):Translation[NewScript, Result] = TranslationError(bad_script_string, error)
+  def scriptMap[NewScript](f:Script=>NewScript)(implicit tag: ClassTag[NewScript]):Translation[NewScript, Result] = TranslationError(bad_script_string, error)
 }
 
 object TranslationError{
@@ -80,7 +80,7 @@ trait TextTranslator[Script, PartialResult, FullResult] extends Translator[List[
       case (notTranslated:NotTranslated[_, _], _) =>
         notTranslated
       case (_, NotTranslated(script)) =>
-        TranslationError(script.toString, "Was not understood by the parsers")
+        TranslationError(script.toString, "Was not understood by the translators")
       case (translationError:TranslationError[_, _], _) =>
         translationError
       case (_, TranslationError(bad_script_string, error)) =>

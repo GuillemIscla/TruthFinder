@@ -12,13 +12,13 @@ trait GHE extends World[GHE] {
   val name: String = "GHE"
   val description:String = "This world contains virtuous gods, vicious evils and voluble humans."
 
-  def possibleWorldStates(war:Option[WorldAspectReference[GHE, WorldState[GHE]]]):List[WorldState[GHE]] =
+  def possibleWorldStates(war:Option[WorldAspectReference[GHE, WorldState[GHE]]], conversation:List[Sentence] = List()):List[WorldState[GHE]] =
     war match {
       case _ =>
         List(Day, Night)
     }
 
-  def possibleWorldAspects(ws:Option[WorldState[GHE]]):List[WorldAspectReference[GHE, WorldState[GHE]]] =
+  def possibleWorldAspects(ws:Option[WorldState[GHE]], conversation:List[Sentence] = List()):List[WorldAspectReference[GHE, WorldState[GHE]]] =
     ws match {
       case _ =>
         List(DayNightReference)
@@ -26,7 +26,7 @@ trait GHE extends World[GHE] {
 
   def checkConsistency(truth:Truth):Boolean = true //No state to be checked
 
-  val races:List[Race] = List(God, Human, Evil)
+  def races(conversation:List[Sentence] = List()):List[Race] = List(God, Human, Evil)
 
   sealed trait DayNightState extends WorldState[GHE]
   case object Day extends DayNightState{
@@ -45,7 +45,7 @@ trait GHE extends World[GHE] {
     val stringRef:String = "Human"
     val description:String = "Humans speak the truth during the day but they lie at night."
 
-    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def canSay(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       findState(truth, DayNightReference) match {
         case Some(Day) => //During the day Humans tell the truth
           b => b
@@ -60,7 +60,7 @@ trait GHE extends World[GHE] {
     val stringRef:String = "Evil"
     val description:String = "Evils always lie."
 
-    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def canSay(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       b => !b //Evil always lie
   }
 
@@ -68,7 +68,7 @@ trait GHE extends World[GHE] {
     val stringRef:String = "God"
     val description: String = "Gods always speak the truth."
 
-    def personality(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
+    def canSay(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       b => b //God always speak the truth
   }
 }

@@ -1,6 +1,6 @@
 package CustomWorldsTests
 
-import TruthEngine.Language.{Character, Name, Sentence, WorldAspect}
+import TruthEngine.Language._
 import TruthEngine.{Translated, TranslationError}
 import Worlds.SinnerOrSaint
 import Worlds.SinnerOrSaint._
@@ -14,7 +14,7 @@ class SinnerOrSaintTests extends CustomWorldTests[SinnerOrSaint]{
 
   test("Custom parsing in SinnerOrSaint"){
     SinnerOrSaintParser.translate("A: It feels there is some WeirdThing") should be (TranslationError("WeirdThing", "WeirdThing is not a valid presence in the SinnerOrSaint world"))
-    SinnerOrSaintParser.translate("A: It feels there is some DaemonPresence") should be (Translated(Sentence(Name("A"), SuperNaturalPresenceReference, DaemonPresence, directObjectAffirmation = true)))
+    SinnerOrSaintParser.translate("A: It feels there is some DaemonPresence") should be (Translated(Sentence(Name("A"), SuperNaturalPresenceReference, None, StateDirectObject(DaemonPresence), directObjectAffirmation = true)))
   }
 
   test("Custom print in SinnerOrSaint"){

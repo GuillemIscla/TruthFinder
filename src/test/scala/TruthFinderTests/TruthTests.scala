@@ -106,9 +106,9 @@ class TruthTests extends FunSuite with Matchers {
       )
 
 
-    Truth.nextAssumptions(TestWorld, truth1) should be (List(truthResult_1_1, truthResult_1_2))
+    Truth.nextAssumptions(TestWorld, truth1, List()) should be (List(truthResult_1_1, truthResult_1_2))
 
-    Truth.nextAssumptions(TestWorld, truth2) should be (List(truthResult_2_1, truthResult_2_2))
+    Truth.nextAssumptions(TestWorld, truth2, List()) should be (List(truthResult_2_1, truthResult_2_2))
   }
 
   test("Next assumptions for Character should be all Races"){
@@ -118,18 +118,18 @@ class TruthTests extends FunSuite with Matchers {
         Character(Name("char1"), None)
       )
 
-    val resultList:List[Truth] = TestWorld.races.map( race =>
+    val resultList:List[Truth] = TestWorld.races().map( race =>
       List(
         WorldAspect(TestWorldStateRef("worldStateRef1"), Some(TestWorldState("worldStateRef1State1"))),
         Character(Name("char1"), Some(race))
       )
     )
 
-    Truth.nextAssumptions(TestWorld, truth1) should be (resultList)
+    Truth.nextAssumptions(TestWorld, truth1, List()) should be (resultList)
   }
 
   test("Truth tellers can speak true sentence"){
-    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val truth1: Truth =
       List(
         WorldAspect(TestWorldStateRef("worldStateRef1"), Some(TestWorldState("worldStateRef1State1"))),
@@ -140,7 +140,7 @@ class TruthTests extends FunSuite with Matchers {
   }
 
   test("Truth tellers cannot speak false sentence"){
-    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val truth1: Truth =
       List(
         WorldAspect(TestWorldStateRef("worldStateRef1"), Some(TestWorldState("worldStateRef1State2"))),
@@ -151,7 +151,7 @@ class TruthTests extends FunSuite with Matchers {
   }
 
   test("Truth tellers can speak undefined sentence"){
-    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val truth1: Truth =
       List(
         WorldAspect(TestWorldStateRef("worldStateRef1"), None),
@@ -162,7 +162,7 @@ class TruthTests extends FunSuite with Matchers {
   }
 
   test("Liars cannot speak true sentence"){
-    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val truth1: Truth =
       List(
         WorldAspect(TestWorldStateRef("worldStateRef1"), Some(TestWorldState("worldStateRef1State1"))),
@@ -173,7 +173,7 @@ class TruthTests extends FunSuite with Matchers {
   }
 
   test("Liars can speak false sentence"){
-    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val truth1: Truth =
       List(
         WorldAspect(TestWorldStateRef("worldStateRef1"), Some(TestWorldState("worldStateRef1State2"))),
@@ -184,7 +184,7 @@ class TruthTests extends FunSuite with Matchers {
   }
 
   test("Liars can speak undefined sentence"){
-    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val truth1: Truth =
       List(
         WorldAspect(TestWorldStateRef("worldStateRef1"), None),
@@ -195,7 +195,7 @@ class TruthTests extends FunSuite with Matchers {
   }
 
   test("No personality characters can speak true sentence"){
-    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val truth1: Truth =
       List(
         WorldAspect(TestWorldStateRef("worldStateRef1"), Some(TestWorldState("worldStateRef1State1"))),
@@ -206,7 +206,7 @@ class TruthTests extends FunSuite with Matchers {
   }
 
   test("No personality characters can speak false sentence"){
-    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val truth1: Truth =
       List(
         WorldAspect(TestWorldStateRef("worldStateRef1"), Some(TestWorldState("worldStateRef1State2"))),
@@ -217,7 +217,7 @@ class TruthTests extends FunSuite with Matchers {
   }
 
   test("No personality characters can speak undefined sentence"){
-    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val truth1: Truth =
       List(
         WorldAspect(TestWorldStateRef("worldStateRef1"), None),
@@ -228,7 +228,7 @@ class TruthTests extends FunSuite with Matchers {
   }
 
   test("No defined characters can speak true sentence"){
-    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val truth1: Truth =
       List(
         WorldAspect(TestWorldStateRef("worldStateRef1"), Some(TestWorldState("worldStateRef1State1"))),
@@ -239,7 +239,7 @@ class TruthTests extends FunSuite with Matchers {
   }
 
   test("No defined characters can speak false sentence"){
-    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val truth1: Truth =
       List(
         WorldAspect(TestWorldStateRef("worldStateRef1"), Some(TestWorldState("worldStateRef1State2"))),
@@ -250,7 +250,7 @@ class TruthTests extends FunSuite with Matchers {
   }
 
   test("No defined characters can speak undefined sentence"){
-    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+    val sentence = Sentence(Name("char1"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     val truth1: Truth =
       List(
         WorldAspect(TestWorldStateRef("worldStateRef1"), None),
@@ -262,9 +262,9 @@ class TruthTests extends FunSuite with Matchers {
 
   test("Infer conversation with 0 truth"){
     val conversation = List(
-      Sentence(Name("char1"), Name("char2"), TestTruthRace("Race1"), directObjectAffirmation = true),
-      Sentence(Name("char2"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true),
-      Sentence(Name("char2"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = false)
+      Sentence(Name("char1"), Name("char2"), None, StateDirectObject(TestTruthRace("Race1")), directObjectAffirmation = true),
+      Sentence(Name("char2"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true),
+      Sentence(Name("char2"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = false)
     )
 
     val truth1: Truth =
@@ -280,9 +280,9 @@ class TruthTests extends FunSuite with Matchers {
 
   test("Infer conversation with 1 truth"){
     val conversation = List(
-      Sentence(Name("char1"), Name("char2"), TestTruthRace("Race1"), directObjectAffirmation = true),
-      Sentence(Name("char2"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true),
-      Sentence(Name("char2"), TestWorldStateRef("worldStateRef2"), TestWorldState("worldStateRef2State1"), directObjectAffirmation = true)
+      Sentence(Name("char1"), Name("char2"), None, StateDirectObject(TestTruthRace("Race1")), directObjectAffirmation = true),
+      Sentence(Name("char2"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true),
+      Sentence(Name("char2"), TestWorldStateRef("worldStateRef2"), None, StateDirectObject(TestWorldState("worldStateRef2State1")), directObjectAffirmation = true)
     )
 
     val truth1: Truth =
@@ -306,8 +306,8 @@ class TruthTests extends FunSuite with Matchers {
 
   test("Infer conversation with multiple truths"){
     val conversation = List(
-      Sentence(Name("char1"), Name("char2"), TestTruthRace("Race1"), directObjectAffirmation = true),
-      Sentence(Name("char2"), TestWorldStateRef("worldStateRef1"), TestWorldState("worldStateRef1State1"), directObjectAffirmation = true)
+      Sentence(Name("char1"), Name("char2"), None, StateDirectObject(TestTruthRace("Race1")), directObjectAffirmation = true),
+      Sentence(Name("char2"), TestWorldStateRef("worldStateRef1"), None, StateDirectObject(TestWorldState("worldStateRef1State1")), directObjectAffirmation = true)
     )
 
     val truth1: Truth =

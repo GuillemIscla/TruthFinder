@@ -1,6 +1,6 @@
 package CustomWorldsTests
 
-import TruthEngine.Language.{Character, Name, Sentence, WorldAspect}
+import TruthEngine.Language._
 import TruthEngine.{Translated, TranslationError}
 import Worlds.MagicForest
 import Worlds.MagicForest._
@@ -15,7 +15,7 @@ class MagicForestTests extends CustomWorldTests[MagicForest]{
 
   test("Custom parsing in MagicForest"){
     MagicForestParser.translate("A: There is BadMood around") should be (TranslationError("BadMood", "BadMood is not a valid environment in the MagicForest"))
-    MagicForestParser.translate("A: There is WhiteMagic around") should be (Translated(Sentence(Name("A"),MagicReference,WhiteMagic, directObjectAffirmation = true)))
+    MagicForestParser.translate("A: There is WhiteMagic around") should be (Translated(Sentence(Name("A"),MagicReference, None, StateDirectObject(WhiteMagic), directObjectAffirmation = true)))
   }
 
   test("Custom print in MagicForest"){

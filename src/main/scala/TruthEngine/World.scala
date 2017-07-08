@@ -29,7 +29,7 @@ trait World[W <: World[W]] {
   }
 
   def findTruth(raw_text:List[String]):Translation[List[String], List[Truth]] =
-    TextParser(worldInstance,  List(RegularWorldStateParser(worldInstance), GenericParser(worldInstance)) ++ customParsers).translate(raw_text).map {
+    TextParser(worldInstance,   customParsers ++ List(RegularWorldStateParser(worldInstance), GenericParser(worldInstance))).translate(raw_text).map {
       case (socratesTruth, text) =>
          Truth.compareTextAndTruth(this, socratesTruth, text)
     }

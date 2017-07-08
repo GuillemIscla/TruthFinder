@@ -110,7 +110,7 @@ trait Poker extends World[Poker] {
 
   override def customMerge(tp1:TruthPiece[State], tp2:TruthPiece[State]): Option[TruthPiece[State]] =
     (tp1, tp2) match {
-      case (Character(reference1, Some(Number(Some(value1)))), Character(reference2, Some(Number(Some(value2))))) if reference1 == reference2 && value1 == value2=>
+      case (Character(reference1, Some(Number(Some(value1)))), Character(reference2, Some(Number(Some(value2))))) if reference1 == reference2 && value1 == value2 =>
         Some(Character(reference1, Some(Number(Some(value1)))))
       case (Character(reference1, Some(Number(_))), Character(reference2, Some(Number(_)))) if reference1 == reference2 =>
         Some(Character(reference1, Some(Number(None))))

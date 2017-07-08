@@ -1,0 +1,7 @@
+C: A is a boy
+C: A doesn't like C
+B: A likes next song
+B: A is drunk
+B: D is waiter
+D: C is a jerk
+D: A doesn't like girls

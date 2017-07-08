@@ -54,16 +54,43 @@ trait GayClub extends World[GayClub] {
           customerName
       }
 
-    !songs.exists(s => songs.count(_ == s) > 1) && peopleWhoLikeHerHimself.isEmpty
+    val thereIsPeopleWhoLikesWrongSexualPreferences = tupleTruth.collect {
+      case (customerName, Some(Customer(_, _, _, Some(Some(personCrush)), _))) =>
+        for{
+          likingPerson <- truth.find(_.reference == customerName)
+          likingCustomer <- likingPerson.state match { case Some(likingCustomer:Customer) => Some(likingCustomer) case _ => None}
+          personCrush <- truth.find(_.reference == personCrush)
+          customerCrush <- personCrush.state match { case Some(customerCrush:Customer) => Some(customerCrush) case _ => None}
+          crushGender <- customerCrush.gender
+          checkedPreference <- checkPreferences(likingCustomer, crushGender)
+        } yield checkedPreference
+    }.flatten.exists(!_)
+
+    val thereIsPeopleWhoLikesWorkers = tupleTruth.collect {
+      case (_, Some(Customer(_, _, _, Some(Some(personCrush)), _))) =>
+        for{
+          personCrush <- truth.find(_.reference == personCrush)
+          _ <- personCrush.state match { case Some(workerCrush:Worker) => Some(workerCrush) case _ => None}
+        } yield false
+    }.flatten.exists(!_)
+
+    !songs.filter(!_.contains(UnknownSong)).exists(s => songs.count(_ == s) > 1) &&
+      peopleWhoLikeHerHimself.isEmpty &&
+      !thereIsPeopleWhoLikesWrongSexualPreferences &&
+      !thereIsPeopleWhoLikesWorkers
   }
 
-  trait SongTrait extends WorldState[GayClub]
+  sealed trait SongTrait extends WorldState[GayClub]
   trait SongReferenceTrait extends WorldAspectReference[GayClub, Song]
   case class SongReference(position:Int) extends SongReferenceTrait
 
+  case object UnknownSong extends SongTrait {
+    val stringRef:String = s"Unknown song"
+    val description:String = "Only the DJs know which song it is"
+  }
   case class Song(group:String, songName:String) extends SongTrait {
     val stringRef:String = s"$songName by $group"
-    val description:String = "The DJ´s like this song"
+    val description:String = "The DJs like this song"
   }
 
   sealed trait SexualPreference
@@ -73,23 +100,41 @@ trait GayClub extends World[GayClub] {
   case object Asexual extends SexualPreference
 
   sealed trait Gender
-  case object Girl extends Gender with Reference[State]{
+  case object Girl extends Gender with Reference[State] {
     override def toString: String = "Girl"
   }
-  case object Boy extends Gender with Reference[State]{
+  case object Boy extends Gender with Reference[State] {
     override def toString: String = "Boy"
   }
 
   sealed trait Mood
-  case object Sober extends Mood{
+  case object Sober extends Mood {
       override def toString: String = "Sober"
     }
-  case object Drunk extends Mood{
+  case object Drunk extends Mood {
     override def toString: String = "Drunk"
   }
-  case object Jerk extends Mood{
+  case object Jerk extends Mood {
     override def toString: String = "Jerk"
   }
+
+  override def customMerge(tp1:TruthPiece[State], tp2:TruthPiece[State]): Option[TruthPiece[State]] =
+    (tp1, tp2) match {
+      case (Character(reference1, Some(Customer(gender1, sexualPreference1, mood1, personCrush1, songCrush1))), Character(reference2, Some(Customer(gender2, sexualPreference2, mood2, personCrush2, songCrush2)))) if reference1 == reference2 =>
+        Some(Character(reference1, Some(
+          Customer(
+            mergeFeature(gender1, gender2),
+            mergeFeature(sexualPreference1, sexualPreference2),
+            mergeFeature(mood1, mood2),
+            mergeFeature(personCrush1, personCrush2),
+            mergeFeature(songCrush1, songCrush2)
+          ))))
+      case (Character(reference1, Some(Worker(job1))), Character(reference2, Some(Worker(job2)))) if reference1 == reference2 =>
+        Some(Character(reference1, Some(Worker(mergeFeature(job1, job2)))))
+      case _ =>
+        None
+    }
+
 
   trait PersonInGayClub extends Race {
     def description(capital:Boolean):String
@@ -123,11 +168,32 @@ trait GayClub extends World[GayClub] {
         case _ =>
           false
       }
+
+    protected def compareFeature[F](thisFeature:Option[F], otherFeature:Option[F]):Boolean =
+      (thisFeature, otherFeature) match {
+        case (Some(f), Some(of)) =>
+          f == of
+        case _ =>
+          true
+      }
     }
 
-  case class Customer(gender:Option[Gender], sexualPreference:Option[SexualPreference], mood:Option[Mood], personCrush:Option[Option[Name]], songCrush:Option[Option[Song]]) extends PersonInGayClub {
+  case class Customer(gender:Option[Gender], sexualPreference:Option[SexualPreference], mood:Option[Mood], personCrush:Option[Option[Name]], songCrush:Option[Option[SongTrait]]) extends PersonInGayClub {
     val stringRef:String = "Customer"
     val description:String = description(capital = true)
+
+    override def compare(other:State):Boolean =
+      other match {
+        case otherCustomer:Customer =>
+          compareFeature(gender, otherCustomer.gender) &&
+            compareFeature(sexualPreference, otherCustomer.sexualPreference) &&
+            compareFeature(mood, otherCustomer.mood) &&
+            compareFeature(personCrush, otherCustomer.personCrush) &&
+            compareFeature(songCrush, otherCustomer.songCrush)
+        case _ =>
+          false
+      }
+
     protected def canSayAfterRestriction(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       mood match {
         case Some(Sober) =>
@@ -171,6 +237,8 @@ trait GayClub extends World[GayClub] {
       songCrush.map{
         case Some(Song(group, songName)) =>
           s"likes $songName by $group"
+        case Some(UnknownSong) =>
+          s"likes some song but we don't know which!"
         case None =>
           "doesn't like any song in particular"
       }
@@ -187,6 +255,15 @@ trait GayClub extends World[GayClub] {
   case class Worker(job:Option[Job]) extends PersonInGayClub {
     val stringRef:String = "Worker"
     val description:String = description(capital = true)
+
+    override def compare(other:State):Boolean =
+      other match {
+        case otherWorker:Worker =>
+          compareFeature(job, otherWorker.job)
+        case _ =>
+          false
+      }
+
     protected def canSayAfterRestriction(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       b => b
 
@@ -235,6 +312,10 @@ trait GayClub extends World[GayClub] {
               checkPreferences(customer, gender)
             case Some(customer: Customer) if !sentence.directObjectAffirmation =>
               checkPreferences(customer, gender).map(!_)
+            case Some(_: Worker) => //Nobody can like workers
+              Some(!sentence.directObjectAffirmation)
+            case _ =>
+              None
           }
         case ReferenceDirectObject(directObject) =>
           (truth(truthPieceIndex).state, sentence.subject) match {
@@ -320,9 +401,9 @@ trait GayClub extends World[GayClub] {
             case _ =>
               Translated(ReferenceDirectObject(SongReference(number.toInt)))
           }
-        case "Girls" =>
+        case "girls" =>
           Translated(ReferenceDirectObject(Girl))
-        case "Boys" =>
+        case "boys" =>
           Translated(ReferenceDirectObject(Boy))
         case charName:String =>
           Translated(ReferenceDirectObject(Name(charName)))
@@ -376,12 +457,12 @@ trait GayClub extends World[GayClub] {
   }
 
   case object GayClubPersonParser extends LineParser[GayClub] {
-    val forbiddenNames: List[String] = List("is", "not", "boy", "girl", "heterosexual", "gay", "bisexual", "asexual", "sober", "drunk", "jerk", "dj", "waiter")
+    val forbiddenNames: List[String] = List("is", "not", "boy", "girl", "heterosexual", "gay", "bisexual", "asexual", "sober", "drunk", "jerk", "dj", "waiter", "boys", "girls", "heterosexuals", "gays", "bisexuals", "asexuals", "sobers", "drunks", "jerks", "djs", "waiters")
     val world: GayClub = worldInstance
     val parserName: String = "GayClubParser"
 
     def translate(raw_script_sentence: String): Translation[String, Sentence] = {
-      val sentenceRegex = """(\w+): (I am|Someone is|No one is|There (is|are) (at least|at most|exactly) \d+|(\w+) is)( not | )(a Boy|Boy|a Girl|Girl|Heterosexual|Gay|Bisexual|Asexual|Sober|Drunk|a Jerk|Jerk|DJ|a Waiter|Waiter)""".r
+      val sentenceRegex = """(\w+): (I am|Someone is|No one is|There (is|are) (at least|at most|exactly) \d+|(\w+) is)( not | )(a boy|boy|boys|a girl|girl|girls|heterosexual|heterosexual|gay|gays|bisexual|bisexuals|asexual|asexuals|sober|sobers|drunk|drunks|a jerk|jerk|jerk|DJ|DJs|a waiter|waiter|waiters)""".r
       raw_script_sentence match {
         case sentenceRegex(speaker, raw_subject, _, _, _, raw_maybe_not, raw_directObject) =>
           for {
@@ -425,28 +506,30 @@ trait GayClub extends World[GayClub] {
 
     private def parseDirectObject(raw_direct_object:String):Translation[String, DirectObject] =
       raw_direct_object match {
-        case "a Boy"|"Boy" =>
+        case "a boy"|"boy"|"boys" =>
           Translated(StateDirectObject(Customer(Some(Boy), None, None, None, None)))
-        case "a Girl"|"Girl" =>
+        case "a girl"|"girl"|"girls" =>
           Translated(StateDirectObject(Customer(Some(Girl), None, None, None, None)))
-        case "Heterosexual" =>
+        case "heterosexual"|"heterosexuals" =>
           Translated(StateDirectObject(Customer(None, Some(Heterosexual), None, None, None)))
-        case "Gay" =>
+        case "gay"|"gays" =>
           Translated(StateDirectObject(Customer(None, Some(Gay), None, None, None)))
-        case "Bisexual" =>
+        case "bisexual"|"bisexuals" =>
           Translated(StateDirectObject(Customer(None, Some(Bisexual), None, None, None)))
-        case "Asexual" =>
+        case "asexual"|"asexuals" =>
           Translated(StateDirectObject(Customer(None, Some(Asexual), None, None, None)))
-        case "Sober" =>
+        case "sober"|"sobers" =>
           Translated(StateDirectObject(Customer(None, None, Some(Sober), None, None)))
-        case "Drunk" =>
+        case "drunk"|"drunks" =>
           Translated(StateDirectObject(Customer(None, None, Some(Drunk), None, None)))
-        case "a Jerk" =>
+        case "a jerk"|"jerks" =>
           Translated(StateDirectObject(Customer(None, None, Some(Jerk), None, None)))
-        case "DJ" =>
+        case "a DJ"|"DJ"|"DJs" =>
           Translated(StateDirectObject(Worker(Some(DJ))))
-        case "a Waiter"|"Waiter" =>
+        case "a waiter"|"waiter"|"waiters" =>
           Translated(StateDirectObject(Worker(Some(Waiter))))
+        case _ =>
+          TranslationError(s"Sentence containing $raw_direct_object", s"GayClubPersonParser thought it could translate this sentence but failed")
       }
 
     private def parseDirectObjectAffirmation(raw_maybe_not:String):Translation[String, Boolean] =
@@ -466,6 +549,12 @@ trait GayClub extends World[GayClub] {
             else if(index == 1) "Next song"
             else s"The song number $index in the playlist"
           Translated(s"$reference is $songName by $group")
+        case (SongReference(index), Some(UnknownSong)) =>
+          val reference =
+            if(index == 0) "The song playing now"
+            else if(index == 1) "Next song"
+            else s"The song number $index in the playlist"
+          Translated(s"$reference is Unknown")
         case _ =>
           NotTranslated(raw_script_sentence)
       }
@@ -476,8 +565,8 @@ trait GayClub extends World[GayClub] {
       conversation.collect{ case Sentence(_, personSubject:Name, _, _, _) => personSubject} ++
       conversation.collect{ case Sentence(_, _, _, ReferenceDirectObject(personDirectObject:Name), _) => personDirectObject}).distinct
 
-  private def getSongs(conversation:List[Sentence]):List[Song] =
-    conversation.collect{ case Sentence(_, _, _, StateDirectObject(song:Song), _) => song}.distinct
+  private def getSongs(conversation:List[Sentence]):List[SongTrait] =
+    UnknownSong :: conversation.collect{ case Sentence(_, _, _, StateDirectObject(song:Song), _) => song}.distinct
 
   private def getStates(conversation:List[Sentence]):List[SongReferenceTrait] = {
     val referencedSongs = getSongs(conversation).indices.map(SongReference.apply).length
@@ -505,6 +594,14 @@ trait GayClub extends World[GayClub] {
         Some(true)
       case (_, Some(Asexual)) =>
         Some(false)
+      case _ =>
+        None
+    }
+
+  private def mergeFeature[F](thisFeature:Option[F], otherFeature:Option[F]):Option[F] =
+    (thisFeature, otherFeature) match {
+      case (Some(f), Some(of)) if f == of =>
+        Some(f)
       case _ =>
         None
     }

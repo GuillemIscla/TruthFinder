@@ -6,6 +6,7 @@ object Language {
   trait State {
     def stringRef:String
     def description:String
+    def compare(other:State):Boolean = stringRef == other.stringRef
   }
   trait WorldState[+W] extends State
   trait Race extends State {
@@ -116,8 +117,8 @@ object Language {
         case None =>
           directObject match {
             case StateDirectObject(sdo) =>
-              if (directObjectAffirmation) truth(truthPieceIndex).state.map(_.stringRef == sdo.stringRef)
-              else truth(truthPieceIndex).state.map(_.stringRef != sdo.stringRef)
+              if (directObjectAffirmation) truth(truthPieceIndex).state.map(_.compare(sdo))
+              else truth(truthPieceIndex).state.map(!_.compare(sdo))
             case ReferenceDirectObject(_) =>
               Some(false)
           }

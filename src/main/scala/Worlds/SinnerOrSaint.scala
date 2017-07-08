@@ -121,6 +121,14 @@ trait SinnerOrSaint extends World[SinnerOrSaint] {
     val stringRef:String = "Human"
     val description:String = "Humans can be either Saints who always tell the truth, Sinners that always lie when there is a daemon around and Undecided which only lie if they speak after a daemon"
 
+    override def compare(other:State):Boolean =
+      other match {
+        case otherHuman:Human =>
+          compareFeature(status, otherHuman.status)
+        case _ =>
+          false
+      }
+
     def canSay(truth: Truth, text:List[Sentence], sentenceIndex:Int):Boolean => Boolean =
       (status, findState(truth, SuperNaturalPresenceReference).map(_ == AngelPresence), spokenAfterDaemon(truth, text, sentenceIndex)) match {
         case (Some(Saint), _, _) =>
@@ -145,6 +153,14 @@ trait SinnerOrSaint extends World[SinnerOrSaint] {
       else
         truth.find(tp => tp.reference == text(sentenceIndex -1).speaker).map(_.state.contains(Daemon))
     }
+
+    private def compareFeature[F](thisFeature:Option[F], otherFeature:Option[F]):Boolean =
+      (thisFeature, otherFeature) match {
+        case (Some(f), Some(of)) =>
+          f == of
+        case _ =>
+          true
+      }
   }
 
   case object Angel extends Race {

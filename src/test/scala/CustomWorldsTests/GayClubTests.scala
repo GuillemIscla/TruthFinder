@@ -12,6 +12,9 @@ trait GayClubTests extends CustomWorldTests[GayClub] {
   def world: GayClub = GayClub
 
   def gayClubParser = TextParser(worldInstance, customParsers ++ List(RegularWorldStateParser(worldInstance), GenericParser(worldInstance)))
+
+  def checkNonCopulative(sentence:Sentence, truth:Truth, truthPieceIndex:Int):Option[Boolean] =
+    sentence.maybeNonCopulativeVerb.flatMap(_.truthPieceTrue(sentence, truth, truthPieceIndex))
 }
 
 class GayClubCustomParsingTests extends GayClubTests {
@@ -185,8 +188,8 @@ class GayClubCustomParsingTests extends GayClubTests {
 
 
   test("Custom parsing I like gender in GayClub"){
-    val sentenceScript1 = "A: I like Girls"
-    val sentenceScript2 = "A: I don't like Boys"
+    val sentenceScript1 = "A: I like girls"
+    val sentenceScript2 = "A: I don't like boys"
     val sentence1 = Sentence(Name("A"), Name("A"), Some(Like), ReferenceDirectObject(Girl), directObjectAffirmation = true)
     val sentence2 = Sentence(Name("A"), Name("A"), Some(Like), ReferenceDirectObject(Boy), directObjectAffirmation = false)
 
@@ -195,8 +198,8 @@ class GayClubCustomParsingTests extends GayClubTests {
   }
 
   test("Custom parsing Someone likes gender in GayClub"){
-    val sentenceScript1 = "A: Someone likes Girls"
-    val sentenceScript2 = "A: Someone doesn't like Boys"
+    val sentenceScript1 = "A: Someone likes girls"
+    val sentenceScript2 = "A: Someone doesn't like boys"
     val sentence1 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(Girl), directObjectAffirmation = true)
     val sentence2 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(Boy), directObjectAffirmation = false)
 
@@ -205,8 +208,8 @@ class GayClubCustomParsingTests extends GayClubTests {
   }
 
   test("Custom parsing No one likes gender in GayClub"){
-    val sentenceScript1 = "A: No one likes Girls"
-    val sentenceScript2 = "A: No one doesn't like Boys"
+    val sentenceScript1 = "A: No one likes girls"
+    val sentenceScript2 = "A: No one doesn't like boys"
     val sentence1 = Sentence(Name("A"), NumberOfPeople(0, Exactly), Some(Like), ReferenceDirectObject(Girl), directObjectAffirmation = true)
     val sentence2 = Sentence(Name("A"), NumberOfPeople(0, Exactly), Some(Like), ReferenceDirectObject(Boy), directObjectAffirmation = false)
 
@@ -215,10 +218,10 @@ class GayClubCustomParsingTests extends GayClubTests {
   }
 
   test("Custom parsing There is at least who likes gender in GayClub"){
-    val sentenceScript1 = "A: There is at least 1 who likes Girls"
-    val sentenceScript2 = "A: There is at least 1 who doesn't like Girls"
-    val sentenceScript3 = "A: There are at least 5 who likes Boys"
-    val sentenceScript4 = "A: There are at least 5 who doesn't like Boys"
+    val sentenceScript1 = "A: There is at least 1 who likes girls"
+    val sentenceScript2 = "A: There is at least 1 who doesn't like girls"
+    val sentenceScript3 = "A: There are at least 5 who likes boys"
+    val sentenceScript4 = "A: There are at least 5 who doesn't like boys"
     val sentence1 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(Girl), directObjectAffirmation = true)
     val sentence2 = Sentence(Name("A"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(Girl), directObjectAffirmation = false)
     val sentence3 = Sentence(Name("A"), NumberOfPeople(5, MoreOrEqual), Some(Like), ReferenceDirectObject(Boy), directObjectAffirmation = true)
@@ -231,10 +234,10 @@ class GayClubCustomParsingTests extends GayClubTests {
   }
 
   test("Custom parsing There is at most who likes gender in GayClub"){
-    val sentenceScript1 = "A: There is at most 1 who likes Girls"
-    val sentenceScript2 = "A: There is at most 1 who doesn't like Girls"
-    val sentenceScript3 = "A: There are at most 5 who likes Boys"
-    val sentenceScript4 = "A: There are at most 5 who doesn't like Boys"
+    val sentenceScript1 = "A: There is at most 1 who likes girls"
+    val sentenceScript2 = "A: There is at most 1 who doesn't like girls"
+    val sentenceScript3 = "A: There are at most 5 who likes boys"
+    val sentenceScript4 = "A: There are at most 5 who doesn't like boys"
     val sentence1 = Sentence(Name("A"), NumberOfPeople(1, LessOrEqual), Some(Like), ReferenceDirectObject(Girl), directObjectAffirmation = true)
     val sentence2 = Sentence(Name("A"), NumberOfPeople(1, LessOrEqual), Some(Like), ReferenceDirectObject(Girl), directObjectAffirmation = false)
     val sentence3 = Sentence(Name("A"), NumberOfPeople(5, LessOrEqual), Some(Like), ReferenceDirectObject(Boy), directObjectAffirmation = true)
@@ -247,10 +250,10 @@ class GayClubCustomParsingTests extends GayClubTests {
   }
 
   test("Custom parsing There is exactly who likes gender in GayClub"){
-    val sentenceScript1 = "A: There is exactly 1 who likes Girls"
-    val sentenceScript2 = "A: There is exactly 1 who doesn't like Girls"
-    val sentenceScript3 = "A: There are exactly 5 who likes Boys"
-    val sentenceScript4 = "A: There are exactly 5 who doesn't like Boys"
+    val sentenceScript1 = "A: There is exactly 1 who likes girls"
+    val sentenceScript2 = "A: There is exactly 1 who doesn't like girls"
+    val sentenceScript3 = "A: There are exactly 5 who likes boys"
+    val sentenceScript4 = "A: There are exactly 5 who doesn't like boys"
     val sentence1 = Sentence(Name("A"), NumberOfPeople(1, Exactly), Some(Like), ReferenceDirectObject(Girl), directObjectAffirmation = true)
     val sentence2 = Sentence(Name("A"), NumberOfPeople(1, Exactly), Some(Like), ReferenceDirectObject(Girl), directObjectAffirmation = false)
     val sentence3 = Sentence(Name("A"), NumberOfPeople(5, Exactly), Some(Like), ReferenceDirectObject(Boy), directObjectAffirmation = true)
@@ -263,20 +266,20 @@ class GayClubCustomParsingTests extends GayClubTests {
   }
 
   test("Custom parsing DJ Someone like sentences"){
-    val sentenceScript1 = "DJ: Someone likes this song"
-    val sentenceScript2 = "DJ: Someone likes next song"
-    val sentenceScript3 = "DJ: Someone likes the song in 2 songs"
-    val sentenceScript4 = "DJ: Someone doesn't like this song"
-    val sentenceScript5 = "DJ: Someone doesn't like next song"
-    val sentenceScript6 = "DJ: Someone doesn't like the song in 2 songs"
+    val sentenceScript1 = "BigMomDJ: Someone likes this song"
+    val sentenceScript2 = "BigMomDJ: Someone likes next song"
+    val sentenceScript3 = "BigMomDJ: Someone likes the song in 2 songs"
+    val sentenceScript4 = "BigMomDJ: Someone doesn't like this song"
+    val sentenceScript5 = "BigMomDJ: Someone doesn't like next song"
+    val sentenceScript6 = "BigMomDJ: Someone doesn't like the song in 2 songs"
 
 
-    val sentence1 = Sentence(Name("DJ"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(SongReference(0)), directObjectAffirmation = true)
-    val sentence2 = Sentence(Name("DJ"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(SongReference(1)), directObjectAffirmation = true)
-    val sentence3 = Sentence(Name("DJ"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(SongReference(2)), directObjectAffirmation = true)
-    val sentence4 = Sentence(Name("DJ"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(SongReference(0)), directObjectAffirmation = false)
-    val sentence5 = Sentence(Name("DJ"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(SongReference(1)), directObjectAffirmation = false)
-    val sentence6 = Sentence(Name("DJ"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(SongReference(2)), directObjectAffirmation = false)
+    val sentence1 = Sentence(Name("BigMomDJ"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(SongReference(0)), directObjectAffirmation = true)
+    val sentence2 = Sentence(Name("BigMomDJ"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(SongReference(1)), directObjectAffirmation = true)
+    val sentence3 = Sentence(Name("BigMomDJ"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(SongReference(2)), directObjectAffirmation = true)
+    val sentence4 = Sentence(Name("BigMomDJ"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(SongReference(0)), directObjectAffirmation = false)
+    val sentence5 = Sentence(Name("BigMomDJ"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(SongReference(1)), directObjectAffirmation = false)
+    val sentence6 = Sentence(Name("BigMomDJ"), NumberOfPeople(1, MoreOrEqual), Some(Like), ReferenceDirectObject(SongReference(2)), directObjectAffirmation = false)
 
     gayClubParser.translate(List(sentenceScript1)).map(_._2) should be (Translated(List(sentence1)))
     gayClubParser.translate(List(sentenceScript2)).map(_._2) should be (Translated(List(sentence2)))
@@ -287,22 +290,22 @@ class GayClubCustomParsingTests extends GayClubTests {
   }
 
   test("Custom parsing about the playlist"){
-    val sentenceScript1 = "DJ: This song is Sweet Dreams by Eurythmics"
-    val sentenceScript2 = "DJ: Next song is Sweet Dreams by Eurythmics"
-    val sentenceScript3 = "DJ: The song in 1 songs is Sweet Dreams by Eurythmics"
-    val sentenceScript4 = "DJ: The song in 2 songs is Sweet Dreams by Eurythmics"
-    val sentenceScript5 = "DJ: This song is not Sweet Dreams by Eurythmics"
-    val sentenceScript6 = "DJ: Next song is not Sweet Dreams by Eurythmics"
-    val sentenceScript7 = "DJ: The song in 1 songs is not Sweet Dreams by Eurythmics"
-    val sentenceScript8 = "DJ: The song in 2 songs is not Sweet Dreams by Eurythmics"
+    val sentenceScript1 = "BigMomDJ: This song is Sweet Dreams by Eurythmics"
+    val sentenceScript2 = "BigMomDJ: Next song is Sweet Dreams by Eurythmics"
+    val sentenceScript3 = "BigMomDJ: The song in 1 songs is Sweet Dreams by Eurythmics"
+    val sentenceScript4 = "BigMomDJ: The song in 2 songs is Sweet Dreams by Eurythmics"
+    val sentenceScript5 = "BigMomDJ: This song is not Sweet Dreams by Eurythmics"
+    val sentenceScript6 = "BigMomDJ: Next song is not Sweet Dreams by Eurythmics"
+    val sentenceScript7 = "BigMomDJ: The song in 1 songs is not Sweet Dreams by Eurythmics"
+    val sentenceScript8 = "BigMomDJ: The song in 2 songs is not Sweet Dreams by Eurythmics"
 
 
-    val sentence1 = Sentence(Name("DJ"), SongReference(0), None, StateDirectObject(Song("Eurythmics", "Sweet Dreams")), directObjectAffirmation = true)
-    val sentence2 = Sentence(Name("DJ"), SongReference(1), None, StateDirectObject(Song("Eurythmics", "Sweet Dreams")), directObjectAffirmation = true)
-    val sentence4 = Sentence(Name("DJ"), SongReference(2), None, StateDirectObject(Song("Eurythmics", "Sweet Dreams")), directObjectAffirmation = true)
-    val sentence5 = Sentence(Name("DJ"), SongReference(0), None, StateDirectObject(Song("Eurythmics", "Sweet Dreams")), directObjectAffirmation = false)
-    val sentence6 = Sentence(Name("DJ"), SongReference(1), None, StateDirectObject(Song("Eurythmics", "Sweet Dreams")), directObjectAffirmation = false)
-    val sentence8 = Sentence(Name("DJ"), SongReference(2), None, StateDirectObject(Song("Eurythmics", "Sweet Dreams")), directObjectAffirmation = false)
+    val sentence1 = Sentence(Name("BigMomDJ"), SongReference(0), None, StateDirectObject(Song("Eurythmics", "Sweet Dreams")), directObjectAffirmation = true)
+    val sentence2 = Sentence(Name("BigMomDJ"), SongReference(1), None, StateDirectObject(Song("Eurythmics", "Sweet Dreams")), directObjectAffirmation = true)
+    val sentence4 = Sentence(Name("BigMomDJ"), SongReference(2), None, StateDirectObject(Song("Eurythmics", "Sweet Dreams")), directObjectAffirmation = true)
+    val sentence5 = Sentence(Name("BigMomDJ"), SongReference(0), None, StateDirectObject(Song("Eurythmics", "Sweet Dreams")), directObjectAffirmation = false)
+    val sentence6 = Sentence(Name("BigMomDJ"), SongReference(1), None, StateDirectObject(Song("Eurythmics", "Sweet Dreams")), directObjectAffirmation = false)
+    val sentence8 = Sentence(Name("BigMomDJ"), SongReference(2), None, StateDirectObject(Song("Eurythmics", "Sweet Dreams")), directObjectAffirmation = false)
 
     gayClubParser.translate(List(sentenceScript1)).map(_._2) should be (Translated(List(sentence1)))
     gayClubParser.translate(List(sentenceScript2)).map(_._2) should be (Translated(List(sentence2)))
@@ -315,35 +318,35 @@ class GayClubCustomParsingTests extends GayClubTests {
   }
 
   test("Custom parsing person"){
-    val sentenceScript1 = "A: I am a Boy"
-    val sentenceScript2 = "A: I am a Girl"
-    val sentenceScript3 = "A: I am Heterosexual"
-    val sentenceScript4 = "A: I am Gay"
-    val sentenceScript5 = "A: I am Bisexual"
-    val sentenceScript6 = "A: I am Asexual"
-    val sentenceScript7 = "A: I am Drunk"
-    val sentenceScript8 = "A: I am Sober"
-    val sentenceScript9 = "A: I am a Jerk"
+    val sentenceScript1 = "A: I am a boy"
+    val sentenceScript2 = "A: I am a girl"
+    val sentenceScript3 = "A: I am heterosexual"
+    val sentenceScript4 = "A: I am gay"
+    val sentenceScript5 = "A: I am bisexual"
+    val sentenceScript6 = "A: I am asexual"
+    val sentenceScript7 = "A: I am drunk"
+    val sentenceScript8 = "A: I am sober"
+    val sentenceScript9 = "A: I am a jerk"
     val sentenceScript10 = "A: I am DJ"
-    val sentenceScript11 = "A: I am a Waiter"
-    val sentenceScript12 = "A: I am not a Boy"
-    val sentenceScript13 = "A: I am not a Girl"
-    val sentenceScript14 = "A: I am not Heterosexual"
-    val sentenceScript15 = "A: I am not Gay"
-    val sentenceScript16 = "A: I am not Bisexual"
-    val sentenceScript17 = "A: I am not Asexual"
-    val sentenceScript18 = "A: I am not Drunk"
-    val sentenceScript19 = "A: I am not Sober"
-    val sentenceScript20 = "A: I am not a Jerk"
+    val sentenceScript11 = "A: I am a waiter"
+    val sentenceScript12 = "A: I am not a boy"
+    val sentenceScript13 = "A: I am not a girl"
+    val sentenceScript14 = "A: I am not heterosexual"
+    val sentenceScript15 = "A: I am not gay"
+    val sentenceScript16 = "A: I am not bisexual"
+    val sentenceScript17 = "A: I am not asexual"
+    val sentenceScript18 = "A: I am not drunk"
+    val sentenceScript19 = "A: I am not sober"
+    val sentenceScript20 = "A: I am not a jerk"
     val sentenceScript21 = "A: I am not DJ"
-    val sentenceScript22 = "A: I am not a Waiter"
-    val sentenceScript23 = "A: B is a Boy"
-    val sentenceScript24 = "A: Everyone is a Boy"
-    val sentenceScript25 = "A: Someone is a Boy"
-    val sentenceScript26 = "A: No one is a Boy"
-    val sentenceScript27 = "A: There are exactly 3 Boy"
-    val sentenceScript28 = "A: There are at least 3 Boy"
-    val sentenceScript29 = "A: There are at most 3 Boy"
+    val sentenceScript22 = "A: I am not a waiter"
+    val sentenceScript23 = "A: B is a boy"
+    val sentenceScript24 = "A: Everyone is a boy"
+    val sentenceScript25 = "A: Someone is a boy"
+    val sentenceScript26 = "A: No one is a boy"
+    val sentenceScript27 = "A: There are exactly 3 boys"
+    val sentenceScript28 = "A: There are at least 3 boys"
+    val sentenceScript29 = "A: There are at most 3 boys"
 
 
     val sentence1 = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(Some(Boy), None, None, None, None)), directObjectAffirmation = true)
@@ -410,24 +413,162 @@ class GayClubCustomParsingTests extends GayClubTests {
 }
 
 class GayClubCopulativeVerbsTests extends GayClubTests {
-  test("Checking sentences that partially describe") {
-    val sentence = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(Some(Girl), None, None, None, None)), directObjectAffirmation = true)
-//    val truthPiece1 = Character(Name("A"), Some(Customer(None, None, None, None, Some(Some(Song("Sweet Dreams", "Eurythmics"))))))
-//    val truthPiece2 = Character(Name("A"), Some(Customer(None, None, None, None, Some(Some(Song("Children of the Revolution", "T.Rex"))))))
-//    val truthPiece3 = Character(Name("A"), Some(Customer(None, None, None, None, Some(None))))
-//    val truthPiece4 = Character(Name("A"), Some(Customer(None, None, None, None, None)))
-//
-//    checkNonCopulative(sentence, List(truthPiece1), 0) should be (Some(true))
-//    checkNonCopulative(sentence, List(truthPiece2), 0) should be (Some(false))
-//    checkNonCopulative(sentence, List(truthPiece3), 0) should be (Some(false))
-//    checkNonCopulative(sentence, List(truthPiece4), 0) should be (None)
+  test("Checking sentences with basic customer truth") {
+    val sentenceGender = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(Some(Girl), None, None, None, None)), directObjectAffirmation = true)
+    val sentenceSexualPreference = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, Some(Gay), None, None, None)), directObjectAffirmation = true)
+    val sentenceMood = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, Some(Drunk), None, None)), directObjectAffirmation = true)
+    val sentencePersonCrush1 = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, None, Some(None), None)), directObjectAffirmation = true)
+    val sentencePersonCrush2 = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, None, Some(Some(Name("B"))), None)), directObjectAffirmation = true)
+    val sentenceSongCrush1 = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, None, None, Some(None))), directObjectAffirmation = true)
+    val sentenceSongCrush2 = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, None, None, Some(Some(Song("Sweet Dreams", "Eurythmics"))))), directObjectAffirmation = true)
+
+    val truthPieceNone = Character(Name("A"), Some(Customer(None, None, None, None, None)))
+
+    sentenceGender.compareWithTruth(List(truthPieceNone)) should be (Some(true))
+    sentenceSexualPreference.compareWithTruth(List(truthPieceNone)) should be (Some(true))
+    sentenceMood.compareWithTruth(List(truthPieceNone)) should be (Some(true))
+    sentencePersonCrush1.compareWithTruth(List(truthPieceNone)) should be (Some(true))
+    sentencePersonCrush2.compareWithTruth(List(truthPieceNone)) should be (Some(true))
+    sentenceSongCrush1.compareWithTruth(List(truthPieceNone)) should be (Some(true))
+    sentenceSongCrush2.compareWithTruth(List(truthPieceNone)) should be (Some(true))
+  }
+
+  test("Checking sentences with customer partial truth gender") {
+    val sentenceGender = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(Some(Girl), None, None, None, None)), directObjectAffirmation = true)
+
+    val truthPieceGenderTrue = Character(Name("A"), Some(Customer(Some(Girl), None, None, None, None)))
+    val truthPieceGenderFalse = Character(Name("A"), Some(Customer(Some(Boy), None, None, None, None)))
+
+    sentenceGender.compareWithTruth(List(truthPieceGenderTrue)) should be (Some(true))
+    sentenceGender.compareWithTruth(List(truthPieceGenderFalse)) should be (Some(false))
+  }
+
+  test("Checking sentences with customer partial truth sexual preference") {
+    val sentenceSexualPreference = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, Some(Gay), None, None, None)), directObjectAffirmation = true)
+
+    val truthSexualPreferenceTrue = Character(Name("A"), Some(Customer(None, Some(Gay), None, None, None)))
+    val truthSexualPreferenceFalse = Character(Name("A"), Some(Customer(None, Some(Heterosexual), None, None, None)))
+
+    sentenceSexualPreference.compareWithTruth(List(truthSexualPreferenceTrue)) should be (Some(true))
+    sentenceSexualPreference.compareWithTruth(List(truthSexualPreferenceFalse)) should be (Some(false))
+  }
+
+  test("Checking sentences with customer partial truth mood") {
+    val sentenceMood = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, Some(Drunk), None, None)), directObjectAffirmation = true)
+
+    val truthPieceMoodTrue = Character(Name("A"), Some(Customer(None, None, Some(Drunk), None, None)))
+    val truthPieceMoodFalse = Character(Name("A"), Some(Customer(None, None, Some(Jerk), None, None)))
+
+    sentenceMood.compareWithTruth(List(truthPieceMoodTrue)) should be (Some(true))
+    sentenceMood.compareWithTruth(List(truthPieceMoodFalse)) should be (Some(false))
+  }
+
+  test("Checking sentences with customer partial truth person crush") {
+    val sentencePersonCrush1 = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, None, Some(None), None)), directObjectAffirmation = true)
+    val sentencePersonCrush2 = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, None, Some(Some(Name("B"))), None)), directObjectAffirmation = true)
+
+    val truthPiecePersonCrush1True = Character(Name("A"), Some(Customer(None, None, None, Some(None), None)))
+    val truthPiecePersonCrush1False = Character(Name("A"), Some(Customer(None, None, None, Some(Some(Name("C"))), None)))
+    val truthPiecePersonCrush2True = Character(Name("A"), Some(Customer(None, None, None, Some(Some(Name("B"))), None)))
+    val truthPiecePersonCrush2False = Character(Name("A"), Some(Customer(None, None, None, Some(Some(Name("C"))), None)))
+
+    sentencePersonCrush1.compareWithTruth(List(truthPiecePersonCrush1True)) should be (Some(true))
+    sentencePersonCrush1.compareWithTruth(List(truthPiecePersonCrush1False)) should be (Some(false))
+    sentencePersonCrush2.compareWithTruth(List(truthPiecePersonCrush2True)) should be (Some(true))
+    sentencePersonCrush2.compareWithTruth(List(truthPiecePersonCrush2False)) should be (Some(false))
+  }
+
+  test("Checking sentences with customer partial truth song crush") {
+    val sentenceSongCrush1 = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, None, None, Some(None))), directObjectAffirmation = true)
+    val sentenceSongCrush2 = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, None, None, Some(Some(Song("Sweet Dreams", "Eurythmics"))))), directObjectAffirmation = true)
+
+    val truthPieceSongCrush1True = Character(Name("A"), Some(Customer(None, None, None, None, Some(None))))
+    val truthPieceSongCrush1False = Character(Name("A"), Some(Customer(None, None, None, None, Some(Some(Song("Children of the Revolution", "T.Rex"))))))
+    val truthPieceSongCrush2True = Character(Name("A"), Some(Customer(None, None, None, None, Some(Some(Song("Sweet Dreams", "Eurythmics"))))))
+    val truthPieceSongCrush2False = Character(Name("A"), Some(Customer(None, None, None, None, Some(Some(Song("Children of the Revolution", "T.Rex"))))))
+
+    sentenceSongCrush1.compareWithTruth(List(truthPieceSongCrush1True)) should be (Some(true))
+    sentenceSongCrush1.compareWithTruth(List(truthPieceSongCrush1False)) should be (Some(false))
+    sentenceSongCrush2.compareWithTruth(List(truthPieceSongCrush2True)) should be (Some(true))
+    sentenceSongCrush2.compareWithTruth(List(truthPieceSongCrush2False)) should be (Some(false))
+  }
+
+  test("Checking sentences with customer defined truth gender") {
+    val sentenceGender = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(Some(Girl), None, None, None, None)), directObjectAffirmation = true)
+
+    val truthPieceGenderTrue = Character(Name("A"), Some(Customer(Some(Girl), Some(Gay), Some(Drunk), Some(Some(Name("B"))), Some(Some(Song("Sweet Dreams", "Eurythmics"))))))
+    val truthPieceGenderFalse = Character(Name("A"), Some(Customer(Some(Boy), Some(Gay), Some(Drunk), Some(Some(Name("B"))), Some(Some(Song("Sweet Dreams", "Eurythmics"))))))
+
+    sentenceGender.compareWithTruth(List(truthPieceGenderTrue)) should be (Some(true))
+    sentenceGender.compareWithTruth(List(truthPieceGenderFalse)) should be (Some(false))
+  }
+
+  test("Checking sentences with customer defined truth sexual preference") {
+    val sentenceSexualPreference = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, Some(Gay), None, None, None)), directObjectAffirmation = true)
+
+    val truthSexualPreferenceTrue = Character(Name("A"), Some(Customer(Some(Girl), Some(Gay), Some(Drunk), Some(Some(Name("B"))), Some(Some(Song("Sweet Dreams", "Eurythmics"))))))
+    val truthSexualPreferenceFalse = Character(Name("A"), Some(Customer(Some(Girl), Some(Heterosexual), Some(Drunk), Some(Some(Name("B"))), Some(Some(Song("Sweet Dreams", "Eurythmics"))))))
+
+    sentenceSexualPreference.compareWithTruth(List(truthSexualPreferenceTrue)) should be (Some(true))
+    sentenceSexualPreference.compareWithTruth(List(truthSexualPreferenceFalse)) should be (Some(false))
+  }
+
+  test("Checking sentences with customer defined truth mood") {
+    val sentenceMood = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, Some(Drunk), None, None)), directObjectAffirmation = true)
+
+    val truthPieceMoodTrue = Character(Name("A"), Some(Customer(Some(Girl), Some(Gay), Some(Drunk), Some(Some(Name("B"))), Some(Some(Song("Sweet Dreams", "Eurythmics"))))))
+    val truthPieceMoodFalse = Character(Name("A"), Some(Customer(Some(Girl), Some(Gay), Some(Jerk), Some(Some(Name("B"))), Some(Some(Song("Sweet Dreams", "Eurythmics"))))))
+
+    sentenceMood.compareWithTruth(List(truthPieceMoodTrue)) should be (Some(true))
+    sentenceMood.compareWithTruth(List(truthPieceMoodFalse)) should be (Some(false))
+  }
+
+  test("Checking sentences with customer defined truth person crush") {
+    val sentencePersonCrush1 = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, None, Some(None), None)), directObjectAffirmation = true)
+    val sentencePersonCrush2 = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, None, Some(Some(Name("B"))), None)), directObjectAffirmation = true)
+
+    val truthPiecePersonCrush1True = Character(Name("A"), Some(Customer(Some(Girl), Some(Gay), Some(Drunk), Some(None), Some(Some(Song("Sweet Dreams", "Eurythmics"))))))
+    val truthPiecePersonCrush1False = Character(Name("A"), Some(Customer(Some(Girl), Some(Gay), Some(Drunk), Some(Some(Name("C"))), Some(Some(Song("Sweet Dreams", "Eurythmics"))))))
+    val truthPiecePersonCrush2True = Character(Name("A"), Some(Customer(Some(Girl), Some(Gay), Some(Drunk), Some(Some(Name("B"))), Some(Some(Song("Sweet Dreams", "Eurythmics"))))))
+    val truthPiecePersonCrush2False = Character(Name("A"), Some(Customer(Some(Girl), Some(Gay), Some(Drunk), Some(Some(Name("C"))), Some(Some(Song("Sweet Dreams", "Eurythmics"))))))
+
+    sentencePersonCrush1.compareWithTruth(List(truthPiecePersonCrush1True)) should be (Some(true))
+    sentencePersonCrush1.compareWithTruth(List(truthPiecePersonCrush1False)) should be (Some(false))
+    sentencePersonCrush2.compareWithTruth(List(truthPiecePersonCrush2True)) should be (Some(true))
+    sentencePersonCrush2.compareWithTruth(List(truthPiecePersonCrush2False)) should be (Some(false))
+  }
+
+  test("Checking sentences with customer defined truth song crush") {
+    val sentenceSongCrush1 = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, None, None, Some(None))), directObjectAffirmation = true)
+    val sentenceSongCrush2 = Sentence(Name("A"), Name("A"), None, StateDirectObject(Customer(None, None, None, None, Some(Some(Song("Sweet Dreams", "Eurythmics"))))), directObjectAffirmation = true)
+
+    val truthPieceSongCrush1True = Character(Name("A"), Some(Customer(Some(Girl), Some(Gay), Some(Drunk), Some(Some(Name("B"))), Some(None))))
+    val truthPieceSongCrush1False = Character(Name("A"), Some(Customer(Some(Girl), Some(Gay), Some(Drunk), Some(Some(Name("B"))), Some(Some(Song("Children of the Revolution", "T.Rex"))))))
+    val truthPieceSongCrush2True = Character(Name("A"), Some(Customer(Some(Girl), Some(Gay), Some(Drunk), Some(Some(Name("B"))), Some(Some(Song("Sweet Dreams", "Eurythmics"))))))
+    val truthPieceSongCrush2False = Character(Name("A"), Some(Customer(Some(Girl), Some(Gay), Some(Drunk), Some(Some(Name("B"))), Some(Some(Song("Children of the Revolution", "T.Rex"))))))
+
+    sentenceSongCrush1.compareWithTruth(List(truthPieceSongCrush1True)) should be (Some(true))
+    sentenceSongCrush1.compareWithTruth(List(truthPieceSongCrush1False)) should be (Some(false))
+    sentenceSongCrush2.compareWithTruth(List(truthPieceSongCrush2True)) should be (Some(true))
+    sentenceSongCrush2.compareWithTruth(List(truthPieceSongCrush2False)) should be (Some(false))
+  }
+
+  test("Checking sentences with worker") {
+    val sentenceWorker = Sentence(Name("A"), Name("A"), None, StateDirectObject(Worker(Some(Waiter))), directObjectAffirmation = true)
+
+    val truthPieceCustomer = Character(Name("A"), Some(Customer(None, None, None, None, None)))
+    val truthPieceWorker = Character(Name("A"), Some(Worker(None)))
+    val truthPieceWaiter = Character(Name("A"), Some(Worker(Some(Waiter))))
+    val truthPieceDJ = Character(Name("A"), Some(Worker(Some(DJ))))
+
+    sentenceWorker.compareWithTruth(List(truthPieceCustomer)) should be (Some(false))
+    sentenceWorker.compareWithTruth(List(truthPieceWorker)) should be (Some(true))
+    sentenceWorker.compareWithTruth(List(truthPieceWaiter)) should be (Some(true))
+    sentenceWorker.compareWithTruth(List(truthPieceDJ)) should be (Some(false))
   }
 }
 
 class GayClubNonCopulativeVerbsTests extends GayClubTests {
-  def checkNonCopulative(sentence:Sentence, truth:Truth, truthPieceIndex:Int):Option[Boolean] =
-    sentence.maybeNonCopulativeVerb.flatMap(_.truthPieceTrue(sentence, truth, truthPieceIndex))
-
   test("Like song positive tests") {
     val sentence = Sentence(Name("A"), Name("A"), Some(Like), StateDirectObject(Song("Sweet Dreams", "Eurythmics")), directObjectAffirmation = true)
     val truthPiece1 = Character(Name("A"), Some(Customer(None, None, None, None, Some(Some(Song("Sweet Dreams", "Eurythmics"))))))
@@ -658,9 +799,9 @@ class GayClubStateTests extends GayClubTests {
       Sentence(Name("A"), Name("A"), Some(Like), StateDirectObject(Song("Eurythmics", "Sweet Dreams")), directObjectAffirmation = true)
     )
     val conversation3 = List()
-    val songs1 = List(Song("Eurythmics", "Sweet Dreams"), Song("T.Rex", "Children of the revolution"))
-    val songs2 = List(Song("Eurythmics", "Sweet Dreams"))
-    val songs3 = List()
+    val songs1 = List(UnknownSong, Song("Eurythmics", "Sweet Dreams"), Song("T.Rex", "Children of the revolution"))
+    val songs2 = List(UnknownSong, Song("Eurythmics", "Sweet Dreams"))
+    val songs3 = List(UnknownSong)
 
     GayClub.possibleWorldStates(None, conversation1) should be (songs1)
     GayClub.possibleWorldStates(None, conversation2) should be (songs2)
@@ -710,8 +851,8 @@ class GayClubStateTests extends GayClubTests {
     races.contains(Worker(Some(DJ))) should be (true)
   }
 
-  test("World states should return empty list with no input"){
-    GayClub.possibleWorldAspects(None) should be (List())
+  test("World states should return just the current song"){
+    GayClub.possibleWorldAspects(None) should be (List(SongReference(0)))
   }
 
   test("World states depend on the conversation"){

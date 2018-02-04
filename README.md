@@ -7,6 +7,8 @@ In this world there are 3 races:
 - **Humans:** They speak the truth during the day but they lie at night
 - **Evil:** They always lie
 
+In this world there are two states: **Day** and **Night**
+
 Find all the information possible in the input conversation:
 
 INPUT:
@@ -17,7 +19,7 @@ INPUT:
 SOLUTION:
 ```
     A is Human
-    It is night
+    It is Night
 ```
 
 **The _Translation_ Monad**
@@ -53,6 +55,67 @@ case class TranslationError[Script, Result](bad_script_string:String, error:Stri
   def flatMap[B](f:Script=>Translation[B, Result]):Translation[Script, Result] = TranslationError(bad_script_string, error)
 }
 ```
-The power of adding custom parsers can be checked in the code world named MagicForest. In this world the world state can be either **Day** or **Night**, but as well can be either or be **WhiteMagic** or **BlackMagic**.
-- So to express that the state is Day the sentence "It is Day" is good enough for plain english. 
-- However "It is WhiteMagic" sounds pretty rusty. Luckily, the custom parsers provided by this world code can understand that this is expressed as "There is WhiteMagic around".
+
+To properly use the translation monad, the project uses Translators. A Translator contains the translation logic and when using translate function any of the following could happen:
+1) Identifies the script as for him to translate and translates it to the result type. 
+2) Identifies the script as for him to translate but produces an error when translating.
+3) Identifies the script as not for him to translate.
+
+This is another naive example of how to use the translator assuming that we have natural language parsers from several languages (codified as String) onto some type (GrammarObject) that is meaninful to the rest of the program.
+
+```
+trait Translator[Script, Result]{
+  def language: String
+  def translate(script:Script):Translation[Script, Result]
+}
+
+trait GrammarObject
+
+case class Person(name:String) extends GrammarObject
+
+case object EnglishTranslator extends Translator[String, GrammarObject]{
+  val language = "English"
+  def translate(script:String):Translation[String, GrammarObject] = ???
+}
+
+case object FrenchTranslator extends Translator[String, GrammarObject]{
+  val language = "French"
+  def translate(script:String):Translation[String, GrammarObject] = ???
+}
+
+
+object Exercise extends App {
+
+    val scriptA:String = "Je m'appelle Guillem" //Script in correct French
+    val scriptToTranslateA = NotTranslated[String, GrammarObject](scriptA)
+
+
+    //Won't be translated, and translation1A will result in NotTranslated(scriptA)
+    val translation1A:Translation[String, GrammarObject] =
+      scriptToTranslateA.flatMap(EnglishTranslator.translate)
+
+    //Will be translated, and translation2A will result in Translated(Person(Guillem))
+    val translation2A:Translation[String, GrammarObject] =
+      translation1A.flatMap(FrenchTranslator.translate)
+
+
+    val scriptB:String = "Mai name is Guillem" //Script in English but with grammar errors
+    val scriptToTranslateB = NotTranslated[String, GrammarObject](scriptB)
+
+    //Won't be translated, and translation1B will result in TranslationError("Mai", "Mai is not correct in English")
+    //This is the case when the translator can tell he is the one to translate the text, however
+    //still produces error when translating
+    val translation1B:Translation[String, GrammarObject] =
+      scriptToTranslateB.flatMap(EnglishTranslator.translate)
+
+    //Will keep the error found in translation1B and so translation2B will still 
+    //be TranslationError("Mai", "Mai is not correct in English")
+    val translation2B:Translation[String, GrammarObject] =
+      translation1B.flatMap(FrenchTranslator.translate)
+}
+      
+```
+
+The power of adding custom parsers can be checked in the code of the world named MagicForest inside the project. In this world the world state can be either **Day** or **Night**, but as well can be either or be **WhiteMagic** or **BlackMagic**.
+- So to express that the state is Day the sentence _"It is Day"_ is good enough for plain english. 
+- However _"It is WhiteMagic"_ sounds pretty rusty. Luckily, the custom parsers provided by this world code can understand that this condition is expressed with the sentence _"There is WhiteMagic around"_.

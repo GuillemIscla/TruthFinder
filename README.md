@@ -45,7 +45,7 @@ case class Translated[Script, Result](result:Result)extends Translation[Script, 
   def flatMap[B](f:Script=>Translation[B, Result]):Translation[Script, Result] = Translated(result)
 }
 
-case class NotTranslated[Script, Result](script:Script)(implicit scriptTag: ClassTag[Script]) extends Translation[Script, Result] {
+case class NotTranslated[Script, Result](script:Script) extends Translation[Script, Result] {
   def map[B](f: Result => B): Translation[Script, B] = NotTranslated(script)
   def flatMap[B](f:Script=>Translation[B, Result]):Translation[Script, Result] = f(script)
 }

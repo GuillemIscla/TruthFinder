@@ -94,7 +94,7 @@ object Exercise extends App {
     val translation1A:Translation[String, GrammarObject] =
       scriptToTranslateA.flatMap(EnglishTranslator.translate)
 
-    //Will be translated, and translation2A will result in Translated(Person(Guillem))
+    //Will be translated, and translation2A will result in Translated(Person("Guillem"))
     val translation2A:Translation[String, GrammarObject] =
       translation1A.flatMap(FrenchTranslator.translate)
 
